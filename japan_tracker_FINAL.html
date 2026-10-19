@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>🇯🇵 Japan Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+      // ─────────────────────────────────────────────────────────────
+      // 🔥 FIREBASE KONFIGURATION — hier deine eigenen Werte eintragen
+      // Anleitung: console.firebase.google.com → Projekt erstellen →
+      // Realtime Database aktivieren → Projekteinstellungen → Web-App hinzufügen
+      // ─────────────────────────────────────────────────────────────
+      const FIREBASE_CONFIG = {
+        apiKey:            "AIzaSyABpSA9fKg8WYxguMG0WcHwb9BATrOPJqw",
+        authDomain:        "japan-money-tracker.firebaseapp.com",
+        databaseURL:       "https://japan-money-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId:         "japan-money-tracker",
+        storageBucket:     "japan-money-tracker.firebasestorage.app",
+        messagingSenderId: "472311014378",
+        appId:             "1:472311014378:web:9135aa3c4971e135c6c893"
+      };
+      // ─────────────────────────────────────────────────────────────
+
+      // Prüfen ob Firebase konfiguriert ist
+      const isConfigured = FIREBASE_CONFIG.apiKey !== "DEIN_API_KEY";
+
+      let db = null;
+      let planRef = null;
+      let syncEnabled = false;
+
+      if (isConfigured) {
+        try {
+          const app = initializeApp(FIREBASE_CONFIG);
+          db = getDatabase(app);
+          // Verwende einen festen Schlüssel — alle Nutzer der App teilen denselben Plan
+          planRef = ref(db, 'japan2025/plan');
+          syncEnabled = true;
+          window._firebaseReady = true;
+        } catch(e) {
+          console.warn('Firebase init fehlgeschlagen:', e);
+          window._firebaseReady = false;
+        }
+      } else {
+        window._firebaseReady = false;
+        console.info('Firebase nicht konfiguriert — App läuft im Offline-Modus.');
+      }
+
+      // Globale Funktionen für den Rest des Skripts
+      window._fbSavePlan = async function(data) {
+        if (!syncEnabled || !planRef) return false;
+        try {
+          await set(planRef, data);
+          return true;
+        } catch(e) {
+          console.warn('Firebase save error:', e);
+          return false;
+        }
+      };
+
+      window._fbSubscribePlan = function(callback) {
+        if (!syncEnabled || !planRef) return null;
+        return onValue(planRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) callback(data);
+        });
+      };
+
+      window._fbGetPlanOnce = async function() {
+        if (!syncEnabled || !planRef) return null;
+        try {
+          const snap = await get(planRef);
+          return snap.val();
+        } catch(e) {
+          return null;
+        }
+      };
+
+      window._firebaseSyncEnabled = syncEnabled;
+    </script>
+    <style>
+        :root {
+          --red:#C0392B; --red-soft:#fdf0ef; --red-border:#f5c6c2;
+          --cream:#FAF6F0; --ink:#1a1410; --ink-soft:#4a3f35;
+          --gold:#B8860B; --gold-light:#f0c040;
+          --card:#FFFFFF; --border:#e8ddd4;
+          --shadow:0 4px 24px rgba(26,20,16,0.10);
+          --header-bg:#1a1410;
+          --accent:var(--red); --accent-soft:var(--red-soft); --accent-border:var(--red-border);
+          --tab-active:var(--red);
+          --status-bar:44px;
+        }
+        body.pink {
+          --red:#e8649a; --red-soft:#fff0f6; --red-border:#fbc8dc;
+          --cream:#fff5f9; --ink:#3a1428; --ink-soft:#9a5070;
+          --gold:#e0748a; --gold-light:#ffcce0;
+          --card:#fffbfd; --border:#f5d0e4;
+          --header-bg:#2d0f1e;
+          --accent:#e8649a; --accent-soft:#fff0f6; --accent-border:#fbc8dc;
+          --tab-active:#e8649a;
+        }
+        body.pink::before { content:'🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸'; position:fixed; top:0; left:0; right:0; bottom:0; font-size:28px; line-height:3.5; letter-spacing:24px; opacity:0.055; pointer-events:none; z-index:0; overflow:hidden; display:block; }
+        body.pink .pages-wrapper { position:relative; z-index:1; }
+        body.pink header::before { content:'🌸'; font-size:100px; opacity:0.08; font-family:inherit; color:var(--gold-light); }
+        body.pink .form-card, body.pink .stat-card, body.pink .entry, body.pink .modal { border-radius:22px !important; }
+        body.pink .entry { border-radius:18px !important; }
+        body.pink .entry-icon { border-radius:14px; background:#fff0f6; }
+        body.pink .form-row input, body.pink .location-row input, body.pink .gps-btn { border-radius:16px !important; }
+        body.pink .cat-btn { border-radius:16px; }
+        body.pink .cat-btn.selected { background:#fff0f6; border-color:#e8649a; }
+        body.pink .add-btn { background:linear-gradient(135deg,#e8649a,#c0397a); border-radius:18px; }
+        body.pink .tabs { background:#fffbfd; }
+        body.pink .sort-option.active { background:#fff0f6; }
+        body.pink .stat-bar { background:var(--accent) !important; }
+        body.pink .manage-cat-del { color:#e8649a; border-color:#fbc8dc; }
+        body.pink #setPinkMode:checked + .toggle-track { background:#e8649a; }
+        body.pink .empty-state .empty-icon::after { content:' 🌸'; }
+        body.pink .modal-overlay { background:rgba(45,15,30,0.55); }
+        body.pink .settings-section-title { color:#c06080; }
+        body.pink .sort-btn { background:#fffbfd; border-color:#f5d0e4; }
+        body.pink .stat-toggle-btn.active { color:#e8649a; background:#fffbfd; }
+        body.pink .day-total { color:#e0748a; }
+        body.pink .budget-remaining { background:rgba(255,255,255,0.15); }
+        body.pink .daily-badge { background:rgba(255,204,224,0.22); color:rgba(255,204,224,0.95); }
+        * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+        html, body { height:100%; overflow:hidden; }
+        body { background:var(--cream); color:var(--ink); font-family:'DM Sans',sans-serif; display:flex; flex-direction:column; transition:background 0.3s,color 0.3s; }
+        .status-bar-spacer { height:var(--status-bar); background:var(--header-bg); flex-shrink:0; transition:background 0.3s; }
+        header { background:var(--header-bg); color:#fff; padding:10px 20px 14px; position:relative; overflow:hidden; flex-shrink:0; transition:background 0.3s; }
+        header::before { content:'日本'; font-family:'Noto Serif JP',serif; position:absolute; right:-10px; top:-10px; font-size:70px; opacity:0.07; color:var(--gold-light); pointer-events:none; }
+        .header-top { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+        .torii { font-size:22px; }
+        h1 { font-family:'Noto Serif JP',serif; font-size:16px; font-weight:700; }
+        h1 span { color:var(--gold-light); }
+        .settings-btn { margin-left:auto; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.45); font-size:13px; width:28px; height:28px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .settings-btn:active { background:rgba(255,255,255,0.2); }
+        /* Sync status indicator */
+        .sync-dot { width:8px; height:8px; border-radius:50%; background:#888; flex-shrink:0; transition:background 0.3s; }
+        .sync-dot.online { background:#27ae60; box-shadow:0 0 6px #27ae60; }
+        .sync-dot.syncing { background:#f39c12; animation:pulse 1s infinite; }
+        .sync-dot.offline { background:#888; }
+        .sync-dot.error { background:#e74c3c; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .budget-section { display:flex; align-items:center; gap:14px; }
+        .ring-wrap { position:relative; width:72px; height:72px; flex-shrink:0; }
+        .ring-wrap svg { transform:rotate(-90deg); }
+        .ring-bg { fill:none; stroke:rgba(255,255,255,0.12); stroke-width:7; }
+        .ring-fill { fill:none; stroke-width:7; stroke-linecap:round; transition:stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1),stroke 0.4s; }
+        .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+        .ring-pct { font-size:15px; font-weight:600; color:#fff; }
+        .ring-label { font-size:8px; color:rgba(255,255,255,0.5); letter-spacing:1px; text-transform:uppercase; }
+        .budget-info { flex:1; min-width:0; }
+        .budget-spent { font-size:24px; font-weight:600; color:#fff; line-height:1; }
+        .budget-sub { font-size:12px; color:rgba(255,255,255,0.55); margin-top:2px; }
+        .budget-row2 { display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap; }
+        .budget-remaining { display:inline-block; background:rgba(255,255,255,0.1); border-radius:20px; padding:2px 10px; font-size:11px; color:rgba(255,255,255,0.8); }
+        .budget-remaining.danger { background:rgba(192,57,43,0.4); color:#ff9f9f; }
+        .set-budget-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.75); font-family:'DM Sans',sans-serif; font-size:11px; padding:4px 10px; border-radius:20px; cursor:pointer; }
+        .daily-badge { display:none; background:rgba(240,192,64,0.18); border-radius:20px; padding:2px 10px; font-size:11px; color:rgba(240,192,64,0.9); }
+        .tabs { display:flex; background:var(--card); border-bottom:1px solid var(--border); box-shadow:0 2px 8px rgba(26,20,16,0.06); flex-shrink:0; }
+        .tab { flex:1; padding:12px 2px; text-align:center; font-size:11px; font-weight:500; color:var(--ink-soft); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; background:none; border-top:none; border-left:none; border-right:none; font-family:'DM Sans',sans-serif; }
+        .tab.active { color:var(--tab-active); border-bottom-color:var(--tab-active); }
+        .pages-wrapper { flex:1; overflow:hidden; position:relative; }
+        .page { display:none; position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+        .page.active { display:block; }
+        .add-page-inner { padding:16px 16px 30px; }
+        .form-card { background:var(--card); border-radius:16px; padding:20px; box-shadow:var(--shadow); border:1px solid var(--border); margin-bottom:16px; }
+        .form-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; margin-bottom:16px; }
+        .form-row { margin-bottom:14px; }
+        .form-row label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-soft); margin-bottom:6px; }
+        .form-row input { width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; color:var(--ink); background:var(--cream); outline:none; transition:border-color 0.2s; -webkit-appearance:none; }
+        .form-row input:focus { border-color:var(--accent); }
+        .form-row input[type="number"] { font-size:20px; font-weight:500; }
+        .form-row input[type="text"] { font-size:15px; }
+        .location-row { display:flex; gap:8px; }
+        .location-row input { flex:1; }
+        .gps-btn { flex-shrink:0; padding:0 14px; border:1.5px solid var(--border); border-radius:10px; background:var(--cream); cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; }
+        .gps-btn.loading { opacity:0.5; pointer-events:none; }
+        .location-suggestions { background:var(--card); border:1.5px solid var(--border); border-radius:10px; margin-top:4px; overflow:hidden; display:none; box-shadow:var(--shadow); }
+        .location-suggestions.visible { display:block; }
+        .suggestion-item { padding:10px 14px; font-size:14px; cursor:pointer; border-bottom:1px solid var(--border); }
+        .suggestion-item:last-child { border-bottom:none; }
+        .suggestion-item:active { background:var(--cream); }
+        .cat-label-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .cat-manage-btn { background:none; border:none; font-size:11px; color:var(--accent); font-family:'DM Sans',sans-serif; cursor:pointer; font-weight:500; }
+        .cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .cat-btn { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 4px; border-radius:10px; border:1.5px solid var(--border); background:var(--cream); cursor:pointer; font-size:10px; color:var(--ink-soft); font-family:'DM Sans',sans-serif; transition:all 0.15s; text-align:center; }
+        .cat-btn .cat-icon { font-size:22px; }
+        .cat-btn.selected { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); font-weight:600; }
+        .add-btn { width:100%; padding:15px; background:var(--accent); color:white; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:600; cursor:pointer; margin-top:4px; transition:opacity 0.2s,transform 0.1s; }
+        .add-btn:active { opacity:0.85; transform:scale(0.98); }
+        .content { padding:14px 14px 30px; }
+        .history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .history-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; }
+        .history-controls { display:flex; align-items:center; gap:8px; }
+        .sort-btn { display:flex; align-items:center; gap:6px; background:var(--card); border:1.5px solid var(--border); border-radius:20px; padding:6px 14px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--ink-soft); cursor:pointer; box-shadow:0 1px 4px rgba(26,20,16,0.07); }
+        .sort-btn-label { color:var(--ink); font-weight:600; }
+        .sort-chevron { font-size:9px; margin-left:2px; }
+        .icon-btn { background:none; border:none; color:var(--ink-soft); font-size:17px; cursor:pointer; padding:4px; opacity:0.6; }
+        .icon-btn:active { opacity:1; color:var(--accent); }
+        .day-group { margin-bottom:18px; }
+        .day-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+        .day-total { color:var(--gold); }
+        .entry { background:var(--card); border-radius:12px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 8px rgba(26,20,16,0.06); border:1px solid var(--border); animation:slideIn 0.25s ease; }
+        @keyframes slideIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+        .entry-icon { width:38px; height:38px; background:var(--cream); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+        .entry-body { flex:1; min-width:0; }
+        .entry-desc { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .entry-meta { font-size:11px; color:var(--ink-soft); margin-top:1px; display:flex; align-items:center; gap:6px; }
+        .entry-loc-tag { background:var(--cream); border-radius:8px; padding:1px 6px; font-size:10px; border:1px solid var(--border); }
+        .entry-amount { font-size:16px; font-weight:600; color:var(--accent); flex-shrink:0; }
+        .entry-delete { background:none; border:none; color:#ccc; font-size:20px; cursor:pointer; padding:0 0 0 8px; line-height:1; }
+        .entry-delete:active { color:var(--accent); }
+        .empty-state { text-align:center; padding:48px 20px; color:var(--ink-soft); }
+        .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+        .empty-state p { font-size:14px; }
+        .stat-toggle { display:flex; background:var(--cream); border-radius:12px; padding:3px; margin-bottom:14px; border:1px solid var(--border); }
+        .stat-toggle-btn { flex:1; padding:8px; border-radius:9px; border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:all 0.2s; }
+        .stat-toggle-btn.active { background:var(--card); color:var(--accent); box-shadow:0 2px 8px rgba(26,20,16,0.10); }
+        .stat-card { background:var(--card); border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:var(--shadow); border:1px solid var(--border); }
+        .stat-card-title { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); font-weight:600; margin-bottom:14px; }
+        .stat-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+        .stat-icon { font-size:18px; width:26px; text-align:center; flex-shrink:0; }
+        .stat-body { flex:1; }
+        .stat-name-row { font-size:13px; font-weight:500; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; gap:6px; }
+        .stat-name-left { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .stat-bar-bg { height:5px; background:var(--cream); border-radius:3px; overflow:hidden; }
+        .stat-bar { height:100%; border-radius:3px; transition:width 0.6s ease; }
+        .no-cities { text-align:center; padding:30px 10px; color:var(--ink-soft); font-size:13px; line-height:1.6; }
+        .settings-section { margin-bottom:20px; }
+        .settings-section-title { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); margin-bottom:10px; }
+        .settings-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); gap:12px; }
+        .settings-row:last-child { border-bottom:none; }
+        .settings-row-left { flex:1; min-width:0; }
+        .settings-row-label { font-size:14px; font-weight:500; }
+        .settings-row-sub { font-size:11px; color:var(--ink-soft); margin-top:2px; }
+        .settings-row-stacked { padding:12px 0; border-bottom:1px solid var(--border); }
+        .toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+        .toggle-switch input { opacity:0; width:0; height:0; }
+        .toggle-track { position:absolute; inset:0; background:#ccc; border-radius:12px; cursor:pointer; transition:background 0.2s; }
+        .toggle-track::after { content:''; position:absolute; left:3px; top:3px; width:18px; height:18px; background:white; border-radius:50%; transition:transform 0.2s; }
+        .toggle-switch input:checked + .toggle-track { background:var(--accent); }
+        .toggle-switch input:checked + .toggle-track::after { transform:translateX(20px); }
+        #setPinkMode:checked + .toggle-track { background:#d63384; }
+        .settings-select { appearance:none; -webkit-appearance:none; background:var(--cream); border:1.5px solid var(--border); border-radius:20px; padding:5px 28px 5px 12px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink); cursor:pointer; outline:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f35'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; flex-shrink:0; }
+        .settings-select:focus { border-color:var(--accent); }
+        .settings-text-input { width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; background:var(--cream); color:var(--ink); outline:none; margin-top:8px; }
+        .settings-text-input:focus { border-color:var(--accent); }
+        .settings-date-input { width:128px; flex-shrink:0; padding:6px 8px; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:11px; background:var(--cream); color:var(--ink); outline:none; -webkit-appearance:none; }
+        .settings-date-input:focus { border-color:var(--accent); }
+        .settings-danger-btn { width:100%; margin-top:6px; padding:13px; background:var(--accent-soft); border:1.5px solid var(--accent-border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--accent); cursor:pointer; font-weight:500; }
+        .pink-mode-label { display:flex; align-items:center; gap:6px; }
+        .pink-pill { background:linear-gradient(90deg,#ffb3d1,#d63384); color:white; font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; letter-spacing:0.5px; text-transform:uppercase; }
+        .modal-overlay { position:fixed; inset:0; background:rgba(26,20,16,0.55); z-index:100; display:flex; align-items:flex-end; backdrop-filter:blur(3px); }
+        .modal-overlay.hidden { display:none; }
+        #sortSheet { z-index:150; }
+        #confirmModal { z-index:300; }
+        .modal { background:var(--card); border-radius:22px 22px 0 0; padding:28px 20px 44px; width:100%; animation:slideUp 0.3s ease; max-height:90vh; overflow-y:auto; }
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .modal h2 { font-family:'Noto Serif JP',serif; font-size:18px; margin-bottom:8px; }
+        .modal-sub { font-size:13px; color:var(--ink-soft); margin-bottom:20px; line-height:1.5; }
+        .modal input[type="text"],.modal input[type="number"] { width:100%; padding:14px; border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:16px; outline:none; margin-bottom:12px; background:var(--cream); color:var(--ink); }
+        .modal input[type="number"] { font-size:22px; font-weight:500; text-align:center; }
+        .modal input:focus { border-color:var(--accent); }
+        .modal-btns { display:flex; gap:10px; }
+        .modal-btns button { flex:1; padding:15px; border-radius:13px; border:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
+        .btn-confirm-red { background:var(--accent); color:white; }
+        .btn-cancel { background:var(--cream); color:var(--ink); border:1.5px solid var(--border) !important; }
+        .btn-danger { background:var(--accent-soft); color:var(--accent); border:1.5px solid var(--accent-border) !important; }
+        .modal-extra { text-align:center; margin-top:14px; }
+        .btn-text-delete { background:none; border:none; color:#aaa; font-size:13px; font-family:'DM Sans',sans-serif; cursor:pointer; padding:6px 12px; }
+        .confirm-icon { font-size:40px; text-align:center; margin-bottom:12px; }
+        .sort-sheet-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 20px; }
+        .sort-sheet-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft); margin-bottom:12px; }
+        .sort-option { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:12px; cursor:pointer; transition:background 0.15s; margin-bottom:4px; border:1.5px solid transparent; }
+        .sort-option:active { background:var(--cream); }
+        .sort-option.active { background:var(--accent-soft); border-color:var(--accent-border); }
+        .sort-option-icon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+        .sort-option-label { font-size:14px; font-weight:500; color:var(--ink); }
+        .sort-option-sub { font-size:11px; color:var(--ink-soft); margin-top:1px; }
+        .sort-option-check { margin-left:auto; font-size:16px; color:var(--accent); opacity:0; flex-shrink:0; }
+        .sort-option.active .sort-option-check { opacity:1; }
+        .emoji-picker { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; max-height:160px; overflow-y:auto; }
+        .emoji-opt { font-size:26px; padding:6px; border-radius:8px; cursor:pointer; border:2px solid transparent; }
+        .emoji-opt:active,.emoji-opt.selected-emoji { border-color:var(--accent); background:var(--accent-soft); }
+        .manage-cat-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+        .manage-cat-icon { font-size:22px; width:32px; text-align:center; }
+        .manage-cat-label { flex:1; font-size:14px; font-weight:500; }
+        .manage-cat-btns { display:flex; gap:6px; }
+        .manage-cat-up,.manage-cat-dn,.manage-cat-del { background:none; border:1px solid var(--border); border-radius:8px; width:30px; height:30px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .manage-cat-del { color:var(--accent); border-color:var(--accent-border); }
+        .manage-add-btn { width:100%; margin-top:14px; padding:13px; background:var(--cream); border:1.5px dashed var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink-soft); cursor:pointer; font-weight:500; }
+        .export-btn { display:flex; align-items:center; gap:8px; width:100%; margin-top:6px; padding:13px 16px; background:var(--cream); border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); cursor:pointer; font-weight:500; text-align:left; }
+        .export-btn:active { background:var(--accent-soft); border-color:var(--accent-border); }
+        /* PLAN */
+        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .plan-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; }
+        .plan-sort-wrap { display:flex; gap:6px; align-items:center; }
+        .plan-sort-chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:var(--card); font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+        .plan-sort-chip.active { background:var(--accent-soft); border-color:var(--accent-border); color:var(--accent); font-weight:600; }
+        .plan-icon-btn { background:none; border:1.5px solid var(--border); border-radius:50%; width:28px; height:28px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0; }
+        .plan-icon-btn:active { background:var(--cream); }
+        .plan-city-group { margin-bottom:20px; }
+        .plan-city-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-soft); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+        .plan-city-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        #planList { display:flex; flex-direction:column; }
+        .plan-card { background:var(--card); border-radius:14px; border:1px solid var(--border); margin-bottom:10px; overflow:hidden; box-shadow:0 2px 8px rgba(26,20,16,0.05); }
+        .plan-card.collapsed .plan-transport,.plan-card.collapsed .plan-card-sections,.plan-card.collapsed .plan-tip-box { display:none; }
+        .plan-card.plan-day-done { opacity:0.45; filter:grayscale(60%); order:999; }
+        .plan-card.plan-day-done .plan-day-pill { background:#aaa !important; }
+        .plan-card-head { display:flex; align-items:flex-start; cursor:pointer; user-select:none; }
+        .plan-day-pill { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:52px; padding:14px 8px; color:white; flex-shrink:0; }
+        .plan-day-num { font-size:20px; font-weight:700; line-height:1; }
+        .plan-day-date { font-size:9px; opacity:0.85; margin-top:3px; }
+        .plan-card-top { flex:1; padding:12px 8px 10px 12px; min-width:0; }
+        .plan-card-city { font-size:12px; font-weight:600; color:var(--ink); margin-bottom:5px; }
+        .plan-progress-row { display:flex; align-items:center; gap:8px; }
+        .plan-progress-bar { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+        .plan-progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.3s ease; }
+        .plan-progress-label { font-size:10px; color:var(--ink-soft); flex-shrink:0; }
+        .plan-collapse-arrow { font-size:11px; color:var(--ink-soft); opacity:0.5; padding:14px 4px 14px 0; align-self:flex-start; flex-shrink:0; transition:transform 0.2s; }
+        .plan-card.collapsed .plan-collapse-arrow { transform:rotate(-90deg); }
+        .plan-edit-btn { background:none; border:none; font-size:16px; cursor:pointer; opacity:0.3; padding:12px 12px 12px 2px; align-self:flex-start; }
+        .plan-edit-btn:active { opacity:1; }
+        .plan-transport { display:flex; align-items:flex-start; gap:8px; padding:7px 14px 7px 52px; background:var(--cream); border-top:1px solid var(--border); font-size:11.5px; color:var(--ink-soft); line-height:1.4; }
+        .plan-transport-icon { font-size:13px; flex-shrink:0; margin-top:1px; }
+        .plan-card-sections { padding:10px 14px 12px; }
+        .plan-section { margin-bottom:10px; }
+        .plan-section:last-child { margin-bottom:0; }
+        .plan-section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-soft); margin-bottom:5px; }
+        .plan-item { display:flex; align-items:flex-start; gap:8px; padding:5px 0; cursor:pointer; border-radius:6px; transition:background 0.1s; }
+        .plan-item:active { background:var(--cream); }
+        .plan-item.plan-item-done .plan-item-text { text-decoration:line-through; color:var(--ink-soft); opacity:0.6; }
+        .plan-item.plan-item-done .plan-checkbox { color:var(--accent); opacity:0.7; }
+        .plan-checkbox { font-size:16px; flex-shrink:0; color:var(--border); line-height:1.3; transition:color 0.15s; }
+        .plan-item-text { flex:1; font-size:13px; color:var(--ink); line-height:1.4; }
+
+        .plan-maps-btn { background:none; border:none; font-size:14px; cursor:pointer; padding:0 0 0 4px; opacity:0.45; flex-shrink:0; line-height:1; }
+        .plan-maps-btn:active { opacity:1; }
+        .plan-item-badge { font-size:9px; font-weight:700; padding:2px 6px; border-radius:6px; flex-shrink:0; margin-top:2px; }
+        .badge-ticket { background:#fff3cd; color:#856404; }
+        .badge-free { background:#d4edda; color:#155724; }
+        .badge-wichtig { background:#f8d7da; color:#721c24; }
+        .badge-new { background:#d4edda; color:#155724; }
+        .badge-flex { background:#e2e3e5; color:#383d41; }
+        .plan-tip-box { margin:0 14px 12px; padding:8px 12px; background:var(--cream); border-radius:8px; font-size:11.5px; color:var(--ink-soft); line-height:1.5; border-left:3px solid var(--gold); }
+        /* Extended plan edit fields */
+        .plan-edit-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-soft); margin-bottom:6px; }
+        .plan-edit-input { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); background:var(--cream); outline:none; margin-bottom:12px; }
+        .plan-edit-input:focus { border-color:var(--accent); }
+        .plan-edit-textarea { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink); background:var(--cream); outline:none; resize:none; min-height:140px; line-height:1.6; margin-bottom:12px; }
+        .plan-edit-textarea:focus { border-color:var(--accent); }
+        .plan-edit-row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .plan-edit-row2 .plan-edit-input { margin-bottom:0; }
+        .plan-edit-row2-wrap { margin-bottom:12px; }
+        /* Firebase banner */
+        .firebase-banner { margin:12px 14px 0; padding:10px 14px; border-radius:10px; background:#fff8e6; border:1.5px solid #ffd666; font-size:12px; color:#7a5800; line-height:1.5; display:none; }
+        .firebase-banner.show { display:block; }
+        .firebase-banner a { color:var(--accent); font-weight:600; text-decoration:none; }
+        /* Sync info in settings */
+        .sync-status-row { display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--cream); border-radius:10px; margin-top:8px; }
+        .sync-status-text { font-size:12px; color:var(--ink-soft); flex:1; }
+        .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--ink); color:white; padding:10px 20px; border-radius:20px; font-size:13px; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; z-index:500; }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+<div class="status-bar-spacer"></div>
+<header>
+    <div class="header-top">
+        <span class="torii">⛩️</span>
+        <h1 id="headerTitle">Japan <span>Tracker</span></h1>
+        <span class="sync-dot offline" id="syncDot" title="Sync-Status"></span>
+        <button class="settings-btn" onclick="openSettingsModal()">⚙️</button>
+    </div>
+    <div class="budget-section">
+        <div class="ring-wrap">
+            <svg width="72" height="72" viewBox="0 0 72 72">
+                <circle class="ring-bg" cx="36" cy="36" r="30"/>
+                <circle class="ring-fill" id="ringFill" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5" stroke="#27ae60"/>
+            </svg>
+            <div class="ring-center"><span class="ring-pct" id="ringPct">–</span><span class="ring-label">davon</span></div>
+        </div>
+        <div class="budget-info">
+            <div class="budget-spent"><span id="currSym">€</span><span id="totalSpent">0,00</span></div>
+            <div class="budget-sub">von <strong id="budgetDisplay">kein Budget</strong></div>
+            <div class="budget-row2">
+                <div class="budget-remaining" id="remainingBadge">–</div>
+                <div class="daily-badge" id="dailyBadge"></div>
+                <button class="set-budget-btn" onclick="openBudgetModal()">✏️ Budget</button>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="tabs">
+    <button class="tab active" onclick="showPage('add',0)">➕ Hinzufügen</button>
+    <button class="tab" onclick="showPage('history',1)">📋 Verlauf</button>
+    <button class="tab" onclick="showPage('stats',2)">📊 Statistik</button>
+    <button class="tab" onclick="showPage('plan',3)">🗓️ Plan</button>
+</div>
+<div class="pages-wrapper">
+    <div class="page active" id="page-add">
+        <div class="add-page-inner">
+            <div class="form-card">
+                <div class="form-title">✚ Ausgabe hinzufügen</div>
+                <div class="form-row">
+                    <label>Betrag (<span class="curr-sym-label">€</span>)</label>
+                    <input type="number" id="amountInput" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
+                </div>
+                <div class="form-row">
+                    <label>Beschreibung</label>
+                    <input type="text" id="descInput" placeholder="z.B. Ramen in Kyoto">
+                </div>
+                <div class="form-row" id="locationFieldRow">
+                    <label>📍 Ort / Stadt</label>
+                    <div class="location-row">
+                        <input type="text" id="locationInput" placeholder="z.B. Kyoto, Shibuya…" autocomplete="off" oninput="onLocationInput(this.value)">
+                        <button class="gps-btn" id="gpsBtn" onclick="getGPSLocation()">📍</button>
+                    </div>
+                    <div class="location-suggestions" id="locationSuggestions"></div>
+                </div>
+                <div class="form-row">
+                    <div class="cat-label-row">
+                        <label style="margin-bottom:0">Kategorie</label>
+                        <button class="cat-manage-btn" onclick="openManageModal()">⚙️ Verwalten</button>
+                    </div>
+                    <div class="cat-grid" id="catGrid" style="margin-top:8px"></div>
+                </div>
+                <button class="add-btn" onclick="addEntry()">+ Hinzufügen</button>
+            </div>
+        </div>
+    </div>
+    <div class="page" id="page-history">
+        <div class="content">
+            <div class="history-header">
+                <div class="history-title">📋 Verlauf</div>
+                <div class="history-controls">
+                    <button class="sort-btn" onclick="openSortSheet()">
+                        <span id="sortBtnIcon">📅</span>
+                        <span id="sortBtnLabel" class="sort-btn-label">Datum</span>
+                        <span class="sort-chevron">▼</span>
+                    </button>
+                    <button class="icon-btn" onclick="exportPDF()" title="PDF">📄</button>
+                    <button class="icon-btn" onclick="askClearAll()">🗑️</button>
+                </div>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+    <div class="page" id="page-stats">
+        <div class="content">
+            <div class="stat-toggle">
+                <button class="stat-toggle-btn active" id="statTabCat" onclick="switchStatTab('cat')">🏷️ Kategorien</button>
+                <button class="stat-toggle-btn" id="statTabCity" onclick="switchStatTab('city')">📍 Städte</button>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title" id="statsPanelTitle">Nach Kategorie</div>
+                <div id="catStats"></div>
+            </div>
+        </div>
+    </div>
+    <div class="page" id="page-plan">
+        <div class="content">
+            <div class="plan-header">
+                <div class="plan-title">🗓️ Reiseplan</div>
+                <div class="plan-sort-wrap">
+                    <button class="plan-icon-btn" onclick="openPlanInfo()" title="Legende">ℹ</button>
+                    <button class="plan-icon-btn" onclick="refreshPlan()" title="Aktualisieren">⟳</button>
+                    <button class="plan-icon-btn" onclick="askResetPlan()" title="Plan zurücksetzen" style="font-size:10px">🔄</button>
+                    <button class="plan-sort-chip active" id="planSortDay" onclick="setPlanSort('day')">📅 Tag</button>
+                    <button class="plan-sort-chip" id="planSortCity" onclick="setPlanSort('city')">📍 Stadt</button>
+                </div>
+            </div>
+
+            <div id="planList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PLAN INFO MODAL -->
+<div class="modal-overlay hidden" id="planInfoModal">
+    <div class="modal">
+        <h2>ℹ️ Legende & Bedienung</h2>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">☐/☑</span><div><div style="font-size:13px;font-weight:500">Abhaken</div><div style="font-size:11px;color:var(--ink-soft)">Punkt antippen → abhaken. Alle abgehakt = Tag rutscht nach unten & wird ausgegraut.</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">▼</span><div><div style="font-size:13px;font-weight:500">Ein-/Ausklappen</div><div style="font-size:11px;color:var(--ink-soft)">Kopf der Karte antippen um das Programm ein- oder auszuklappen.</div></div></div>
+
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">🗺️</span><div><div style="font-size:13px;font-weight:500">Google Maps</div><div style="font-size:11px;color:var(--ink-soft)">Maps-Link mit {https://maps.google.com/?q=Ort} an Zeile anhängen.</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">↕</span><div><div style="font-size:13px;font-weight:500">Plan teilen</div><div style="font-size:11px;color:var(--ink-soft)">Plan als Code exportieren & an Freunde schicken. Sie importieren ihn mit demselben Button.</div></div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);margin-bottom:8px">Badges im Programm</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <span class="plan-item-badge badge-ticket">Ticket 🎟️</span><span style="font-size:11px;color:var(--ink-soft);align-self:center">= [ticket]</span>
+            <span class="plan-item-badge badge-wichtig">wichtig ⚠️</span><span style="font-size:11px;color:var(--ink-soft);align-self:center">= [wichtig]</span>
+            <span class="plan-item-badge badge-free">kostenlos</span><span style="font-size:11px;color:var(--ink-soft);align-self:center">= [free]</span>
+            <span class="plan-item-badge badge-flex">flexibel</span><span style="font-size:11px;color:var(--ink-soft);align-self:center">= [flexibel]</span>
+        </div>
+        <button class="btn-confirm-red" style="width:100%;padding:14px;border-radius:13px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer" onclick="document.getElementById('planInfoModal').classList.add('hidden')">Verstanden</button>
+    </div>
+</div>
+
+<!-- PLAN EDIT MODAL — erweitert mit Tag-Nummer, Datum -->
+<div class="modal-overlay hidden" id="planEditModal">
+    <div class="modal">
+        <h2>✏️ Tag bearbeiten</h2>
+        <div class="modal-sub" id="planEditSubtitle"></div>
+
+        <div class="plan-edit-label">Tag-Nr. & Datum</div>
+        <div class="plan-edit-row2 plan-edit-row2-wrap">
+            <input type="number" class="plan-edit-input" id="planEditDayNum" placeholder="z.B. 1" min="1" max="99" style="font-size:18px;font-weight:600;text-align:center">
+            <input type="text" class="plan-edit-input" id="planEditDate" placeholder="z.B. 25.04." maxlength="10">
+        </div>
+
+        <div class="plan-edit-label">Stadt / Ort</div>
+        <input type="text" class="plan-edit-input" id="planEditCity" placeholder="z.B. Kyoto">
+        <div class="plan-edit-label">🚄 Anreise / Transport</div>
+        <input type="text" class="plan-edit-input" id="planEditTransport" placeholder="z.B. Shinkansen → Kyoto">
+        <div class="plan-edit-label">Programm — [Abschnitt] als Überschrift, Punkte darunter</div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;line-height:1.5">Maps-Link: <code style="background:var(--cream);padding:1px 5px;border-radius:4px;font-size:10px">{https://maps.google.com/?q=Tokio}</code> an Zeile anhängen</div>
+
+        <textarea class="plan-edit-textarea" id="planEditDesc" placeholder="[Morgens]&#10;Senso-ji Tempel {https://maps.google.com/?q=Senso-ji}&#10;Nakamise Street [ticket]&#10;&#10;[Abends]&#10;Shibuya Crossing"></textarea>
+        <div class="plan-edit-label">💡 Tipp</div>
+        <input type="text" class="plan-edit-input" id="planEditTip" placeholder="z.B. Frühzeitig buchen!">
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closePlanEdit()">Abbrechen</button>
+            <button class="btn-confirm-red" onclick="savePlanEdit()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- SORT SHEET -->
+<div class="modal-overlay hidden" id="sortSheet">
+    <div class="modal" style="padding-top:18px;padding-bottom:36px">
+        <div class="sort-sheet-handle"></div>
+        <div class="sort-sheet-title">Verlauf sortieren nach</div>
+        <div id="sortOptionsList"></div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal">
+        <h2>⚙️ Einstellungen</h2>
+        <div class="modal-sub">Passe den Tracker nach deinen Wünschen an.</div>
+        <div class="settings-section">
+            <div class="settings-section-title">Darstellung</div>
+            <div class="settings-row">
+                <div class="settings-row-left"><div class="settings-row-label">Währung</div><div class="settings-row-sub">Anzeige im Tracker</div></div>
+                <select class="settings-select" id="setCurrency" onchange="applySetting('currency',this.value)">
+                    <option value="EUR">€ Euro</option><option value="JPY">¥ Yen</option>
+                    <option value="CHF">CHF</option><option value="USD">$ Dollar</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <div class="settings-row-left">
+                    <div class="settings-row-label pink-mode-label">Pink Mode <span class="pink-pill">✨ cute</span></div>
+                    <div class="settings-row-sub">Alles wird süßer & pinker</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" id="setPinkMode" onchange="applyPinkMode(this.checked)"><span class="toggle-track"></span></label>
+            </div>
+            <div class="settings-row">
+                <div class="settings-row-left"><div class="settings-row-label">Ortsfeld anzeigen</div><div class="settings-row-sub">Beim Hinzufügen</div></div>
+                <label class="toggle-switch"><input type="checkbox" id="setShowLocation" onchange="applySetting('showLocation',this.checked)"><span class="toggle-track"></span></label>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-section-title">Reise</div>
+            <div class="settings-row-stacked">
+                <div class="settings-row-label">Reisename</div>
+                <div class="settings-row-sub">Im Header</div>
+                <input type="text" class="settings-text-input" id="setTripName" placeholder="Japan 2025" maxlength="18" oninput="applySetting('tripName',this.value)">
+            </div>
+            <div class="settings-row">
+                <div class="settings-row-left"><div class="settings-row-label">Budget anzeigen als</div><div class="settings-row-sub">Im Header</div></div>
+                <select class="settings-select" id="setBudgetMode" onchange="onBudgetModeChange(this.value)">
+                    <option value="total">Gesamt</option>
+                    <option value="daily">Ø pro Tag</option>
+                </select>
+            </div>
+            <div id="tripDatesSection" style="display:none">
+                <div class="settings-row">
+                    <div class="settings-row-left"><div class="settings-row-label">Reisebeginn</div><div class="settings-row-sub">Für Tagesberechnung</div></div>
+                    <input type="date" class="settings-date-input" id="setTripStart" onchange="applySetting('tripStart',this.value)">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-row-left"><div class="settings-row-label">Reiseende</div><div class="settings-row-sub">Für Tagesberechnung</div></div>
+                    <input type="date" class="settings-date-input" id="setTripEnd" onchange="applySetting('tripEnd',this.value)">
+                </div>
+            </div>
+        </div>
+
+                <div class="settings-section">
+            <div class="settings-section-title">🔥 Echtzeit-Sync</div>
+            <div class="sync-status-row" id="syncStatusRow">
+                <span class="sync-dot offline" id="syncDot2"></span>
+                <span class="sync-status-text" id="syncStatusText">Verbinde…</span>
+            </div>
+        </div>
+                <div class="settings-section">
+            <div class="settings-section-title">Export & Daten</div>
+            <button class="export-btn" onclick="closeSettingsModal();exportPDF();">
+                <span style="font-size:18px">📄</span>
+                <div><div style="font-weight:600">Als PDF exportieren</div><div style="font-size:11px;color:var(--ink-soft);margin-top:1px">Alle Ausgaben als Übersicht</div></div>
+            </button>
+            <button class="settings-danger-btn" style="margin-top:10px" onclick="closeSettingsModal();askClearAll();">🗑️ Alle Ausgaben löschen</button>
+            <button class="settings-danger-btn" style="margin-top:8px" onclick="closeSettingsModal();askResetAll();">↩️ App zurücksetzen</button>
+        </div>
+        <div style="margin-top:4px">
+            <button class="btn-confirm-red" style="width:100%;padding:14px;border-radius:13px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer" onclick="closeSettingsModal()">Fertig</button>
+        </div>
+    </div>
+</div>
+
+<!-- BUDGET MODAL -->
+<div class="modal-overlay hidden" id="budgetModal">
+    <div class="modal">
+        <h2>🎯 Budget setzen</h2>
+        <div class="modal-sub">Wie viel möchtest du für Japan ausgeben?</div>
+        <input type="number" id="budgetInput" placeholder="z.B. 2000" inputmode="decimal">
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeBudgetModal()">Abbrechen</button>
+            <button class="btn-confirm-red" onclick="saveBudget()">Speichern</button>
+        </div>
+        <div class="modal-extra"><button class="btn-text-delete" onclick="askDeleteBudget()">🗑️ Budget löschen</button></div>
+    </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay hidden" id="confirmModal">
+    <div class="modal">
+        <div class="confirm-icon" id="confirmIcon">🗑️</div>
+        <h2 id="confirmTitle">Sicher?</h2>
+        <div class="modal-sub" id="confirmText"></div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeConfirm()">Abbrechen</button>
+            <button class="btn-danger" id="confirmOkBtn" onclick="confirmAction()">Löschen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MANAGE CATS -->
+<div class="modal-overlay hidden" id="manageModal">
+    <div class="modal">
+        <h2>⚙️ Kategorien verwalten</h2>
+        <div class="modal-sub">Sortiere per ↑↓, lösche oder füge neue hinzu.</div>
+        <div id="manageCatList"></div>
+        <button class="manage-add-btn" onclick="openAddCatModal()">＋ Neue Kategorie hinzufügen</button>
+        <div style="margin-top:16px"><button class="btn-confirm-red" style="width:100%;padding:14px;border-radius:13px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer" onclick="closeManageModal()">Fertig</button></div>
+    </div>
+</div>
+
+<!-- ADD CAT -->
+<div class="modal-overlay hidden" id="addCatModal">
+    <div class="modal">
+        <h2>➕ Neue Kategorie</h2>
+        <div class="modal-sub">Wähle ein Emoji und gib einen Namen ein.</div>
+        <div class="emoji-picker" id="emojiPicker"></div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-soft);margin-bottom:6px">Name</div>
+        <input type="text" id="newCatName" placeholder="z.B. Anime Merch" maxlength="16">
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeAddCatModal()">Abbrechen</button>
+            <button class="btn-confirm-red" onclick="saveNewCat()">Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+    const DEFAULT_CATS=[
+      {id:'food',icon:'🍜',label:'Essen'},{id:'transport',icon:'🚅',label:'Transport'},
+      {id:'hotel',icon:'🏨',label:'Hotel'},{id:'shopping',icon:'🛍️',label:'Shopping'},
+      {id:'culture',icon:'⛩️',label:'Kultur'},{id:'entertainment',icon:'🎡',label:'Unterhaltung'},
+      {id:'drinks',icon:'🍺',label:'Getränke'},{id:'misc',icon:'💴',label:'Sonstiges'},
+    ];
+    const EMOJI_LIST=['🍜','🍱','🍣','🍛','🍰','☕','🍺','🍶','🚅','🚇','✈️','🚕','🛳️','🚲','🏨','🏕️','🛍️','👘','👟','💄','💍','⛩️','🎡','🎢','🎭','🎮','🎯','🏯','🌸','🗻','🗾','🎌','💊','🏥','💴','💰','📸','🎵','⚡','🔑','🧧','🪄','🎁','🐉','🦊','🌟','🎋','🏮'];
+    const JAPAN_CITIES=['Tokyo','Kyoto','Osaka','Nara','Hiroshima','Sapporo','Yokohama','Nagoya','Fukuoka','Kobe','Nikko','Hakone','Kamakura','Kanazawa','Matsumoto','Takayama','Shibuya','Shinjuku','Akihabara','Asakusa','Ginza','Harajuku','Ueno','Ikebukuro','Nakameguro','Arashiyama','Fushimi','Gion','Dotonbori','Namba'];
+    const SORT_OPTIONS=[
+      {value:'date',icon:'📅',label:'Datum',sub:'Neueste zuerst'},
+      {value:'city',icon:'📍',label:'Stadt',sub:'Alphabetisch nach Ort'},
+      {value:'cat',icon:'🏷️',label:'Kategorie',sub:'Alphabetisch nach Kategorie'},
+      {value:'amount_desc',icon:'💰',label:'Betrag ↓',sub:'Höchste zuerst'},
+      {value:'amount_asc',icon:'💰',label:'Betrag ↑',sub:'Niedrigste zuerst'},
+    ];
+    const CURR_SYMS={EUR:'€',JPY:'¥',CHF:'CHF ',USD:'$'};
+    const SET_DEF={currency:'EUR',showLocation:true,budgetMode:'total',tripName:'',tripStart:'',tripEnd:'',pinkMode:false};
+    const DAY_PALETTE=['#5B8CFF','#FF6B6B','#4ECDC4','#F7B731','#A55EEA','#26de81','#fd9644','#45aaf2','#fc5c65','#2bcbba','#fed330','#a55eea','#26de81','#fd9644','#45aaf2','#fc5c65','#2bcbba','#fed330','#a55eea','#26de81','#fd9644','#45aaf2'];
+
+    let cats=JSON.parse(localStorage.getItem('jp_cats')||'null')||DEFAULT_CATS;
+    let entries=JSON.parse(localStorage.getItem('jp_entries')||'[]');
+    let budget=parseFloat(localStorage.getItem('jp_budget')||'0');
+    let settings=JSON.parse(localStorage.getItem('jp_settings')||'{}');
+    let selectedCat='food',pendingAction=null,selectedEmoji=EMOJI_LIST[0];
+    let currentStatTab='cat',currentSort='date';
+
+    // ── SYNC STATE ────────────────────────────────────────────
+    let syncState = 'offline'; // offline | syncing | online | error
+    let _fbUnsubscribe = null;
+    let _ignoreNextFbUpdate = false; // prevent echo after local save
+
+    function setSyncState(state) {
+      syncState = state;
+      const dots = [document.getElementById('syncDot'), document.getElementById('syncDot2')];
+      const text = document.getElementById('syncStatusText');
+      dots.forEach(d => { if(d) { d.className = 'sync-dot ' + state; }});
+      if(text) {
+        const msgs = {
+          offline: 'Nicht verbunden — Firebase nicht konfiguriert',
+          syncing: 'Verbinde mit Firebase…',
+          online:  '✓ Echtzeit-Sync aktiv — Änderungen werden geteilt',
+          error:   '⚠️ Sync-Fehler — bitte Konfiguration prüfen'
+        };
+        text.textContent = msgs[state] || state;
+      }
+    }
+
+    const gs=k=>(settings[k]!==undefined?settings[k]:SET_DEF[k]);
+    const sym=()=>CURR_SYMS[gs('currency')]||'€';
+    const saveCats=()=>localStorage.setItem('jp_cats',JSON.stringify(cats));
+    const saveEntries=()=>localStorage.setItem('jp_entries',JSON.stringify(entries));
+    const saveSettings=()=>localStorage.setItem('jp_settings',JSON.stringify(settings));
+    const fmt=n=>n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const totalSpent=()=>entries.reduce((s,e)=>s+e.amount,0);
+
+    function tripDays(){
+      const s=gs('tripStart'),e=gs('tripEnd');
+      if(!s||!e)return null;
+      const d1=new Date(s),d2=new Date(e);
+      if(isNaN(d1)||isNaN(d2)||d2<d1)return null;
+      return Math.max(1,Math.round((d2-d1)/86400000)+1);
+    }
+
+    function applyPinkMode(on){settings.pinkMode=on;saveSettings();document.body.classList.toggle('pink',on);}
+    function applySetting(k,v){settings[k]=v;saveSettings();applyAllSettings();updateHeader();}
+    function onBudgetModeChange(v){
+      applySetting('budgetMode',v);
+      document.getElementById('tripDatesSection').style.display=v==='daily'?'':'none';
+    }
+    function applyAllSettings(){
+      const s=sym();
+      document.getElementById('currSym').textContent=s;
+      document.querySelectorAll('.curr-sym-label').forEach(el=>el.textContent=s);
+      const name=gs('tripName');
+      document.getElementById('headerTitle').innerHTML=(name||'Japan')+' <span>Tracker</span>';
+      const locRow=document.getElementById('locationFieldRow');
+      if(locRow)locRow.style.display=gs('showLocation')?'':'none';
+      document.body.classList.toggle('pink',!!gs('pinkMode'));
+      const badge=document.getElementById('dailyBadge');
+      if(gs('budgetMode')==='daily'){
+        const days=tripDays();
+        if(days){
+          const spentPerDay=totalSpent()/days;
+          const budgetPerDay=budget>0?budget/days:null;
+          badge.textContent=budgetPerDay?`Ø ${s}${fmt(spentPerDay)} / Tag (Budget: ${s}${fmt(budgetPerDay)})`:`Ø ${s}${fmt(spentPerDay)} / Tag`;
+        } else {
+          badge.textContent='Zeitraum in Einst. setzen';
+        }
+        badge.style.display='inline-block';
+      } else {
+        badge.style.display='none';
+      }
+    }
+    function openSettingsModal(){
+      document.getElementById('setCurrency').value=gs('currency');
+      document.getElementById('setShowLocation').checked=gs('showLocation');
+      document.getElementById('setBudgetMode').value=gs('budgetMode');
+      document.getElementById('setTripName').value=gs('tripName');
+      document.getElementById('setTripStart').value=gs('tripStart');
+      document.getElementById('setTripEnd').value=gs('tripEnd');
+      document.getElementById('setPinkMode').checked=!!gs('pinkMode');
+      document.getElementById('tripDatesSection').style.display=gs('budgetMode')==='daily'?'':'none';
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+    function closeSettingsModal(){document.getElementById('settingsModal').classList.add('hidden');}
+    function askResetAll(){
+      showConfirm('⚠️','App zurücksetzen?','Alle Ausgaben, Kategorien und Einstellungen werden dauerhaft gelöscht.','Zurücksetzen',()=>{
+        localStorage.clear();
+        cats=[...DEFAULT_CATS.map(c=>({...c}))];entries=[];budget=0;settings={};
+        document.body.classList.remove('pink');
+        saveCats();updateAll();applyAllSettings();showToast('App zurückgesetzt');
+      });
+    }
+
+    function openSortSheet(){
+      document.getElementById('sortOptionsList').innerHTML=SORT_OPTIONS.map(o=>`
+        <div class="sort-option${currentSort===o.value?' active':''}" onclick="selectSort('${o.value}')">
+          <span class="sort-option-icon">${o.icon}</span>
+          <div><div class="sort-option-label">${o.label}</div><div class="sort-option-sub">${o.sub}</div></div>
+          <span class="sort-option-check">✓</span>
+        </div>`).join('');
+      document.getElementById('sortSheet').classList.remove('hidden');
+    }
+    function closeSortSheet(){document.getElementById('sortSheet').classList.add('hidden');}
+    function selectSort(val){
+      currentSort=val;
+      const o=SORT_OPTIONS.find(x=>x.value===val);
+      document.getElementById('sortBtnIcon').textContent=o.icon;
+      document.getElementById('sortBtnLabel').textContent=o.label;
+      closeSortSheet();updateHistory();
+    }
+
+    function onLocationInput(val){
+      const box=document.getElementById('locationSuggestions');
+      if(!val){box.classList.remove('visible');return;}
+      const q=val.toLowerCase();
+      const matches=JAPAN_CITIES.filter(c=>c.toLowerCase().includes(q)).slice(0,5);
+      const used=[...new Set(entries.map(e=>e.location).filter(Boolean))];
+      const extra=used.filter(c=>c.toLowerCase().includes(q)&&!matches.some(m=>m.toLowerCase()===c.toLowerCase())).slice(0,3);
+      const all=[...matches,...extra];
+      if(!all.length){box.classList.remove('visible');return;}
+      box.innerHTML=all.map(c=>`<div class="suggestion-item" onclick="selectLocation('${c}')">${c}</div>`).join('');
+      box.classList.add('visible');
+    }
+    function selectLocation(city){
+      document.getElementById('locationInput').value=city;
+      document.getElementById('locationSuggestions').classList.remove('visible');
+    }
+    function getGPSLocation(){
+      if(!navigator.geolocation){showToast('GPS nicht verfügbar');return;}
+      const btn=document.getElementById('gpsBtn');
+      btn.classList.add('loading');btn.textContent='⏳';
+      navigator.geolocation.getCurrentPosition(
+        async pos=>{
+          try{
+            const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=10&accept-language=de`);
+            const d=await r.json();
+            const city=d.address?.city||d.address?.town||d.address?.village||d.address?.county||'Unbekannt';
+            document.getElementById('locationInput').value=city;
+            showToast('📍 '+city+' erkannt');
+          }catch{showToast('Ort konnte nicht erkannt werden');}
+          btn.classList.remove('loading');btn.textContent='📍';
+        },
+        ()=>{btn.classList.remove('loading');btn.textContent='📍';showToast('Standort-Zugriff verweigert — bitte in Browser-Einstellungen erlauben');},
+        {timeout:10000,enableHighAccuracy:false}
+      );
+    }
+
+    function buildCatGrid(){
+      const grid=document.getElementById('catGrid');
+      grid.innerHTML='';
+      cats.forEach(c=>{
+        const btn=document.createElement('button');
+        btn.className='cat-btn'+(c.id===selectedCat?' selected':'');
+        btn.innerHTML=`<span class="cat-icon">${c.icon}</span>${c.label}`;
+        btn.onclick=()=>{selectedCat=c.id;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');};
+        grid.appendChild(btn);
+      });
+    }
+
+    function addEntry(){
+      const amount=parseFloat(document.getElementById('amountInput').value);
+      const desc=document.getElementById('descInput').value.trim();
+      const loc=document.getElementById('locationInput').value.trim();
+      if(!amount||amount<=0){showToast('Bitte einen Betrag eingeben');return;}
+      const cat=cats.find(c=>c.id===selectedCat)||cats[0];
+      entries.unshift({id:Date.now(),amount,desc:desc||cat.label,cat:cat.id,icon:cat.icon,location:loc,date:new Date().toISOString()});
+      saveEntries();
+      document.getElementById('amountInput').value='';
+      document.getElementById('descInput').value='';
+      document.getElementById('locationInput').value='';
+      document.getElementById('locationSuggestions').classList.remove('visible');
+      updateAll();
+      showToast('✓ Gespeichert'+(loc?' · '+loc:''));
+    }
+
+    function showConfirm(icon,title,text,btnLabel,action){
+      document.getElementById('confirmIcon').textContent=icon;
+      document.getElementById('confirmTitle').textContent=title;
+      document.getElementById('confirmText').textContent=text;
+      document.getElementById('confirmOkBtn').textContent=btnLabel;
+      pendingAction=action;
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+    function closeConfirm(){document.getElementById('confirmModal').classList.add('hidden');pendingAction=null;}
+    function confirmAction(){if(pendingAction)pendingAction();closeConfirm();}
+
+    function askDeleteEntry(id){
+      const e=entries.find(x=>x.id===id);
+      showConfirm('🗑️','Eintrag löschen?',`"${e?.desc||'Dieser Eintrag'}" wird dauerhaft gelöscht.`,'Löschen',()=>{
+        entries=entries.filter(x=>x.id!==id);saveEntries();updateAll();showToast('Eintrag gelöscht');
+      });
+    }
+    function askClearAll(){
+      if(!entries.length){showToast('Keine Einträge vorhanden');return;}
+      showConfirm('⚠️','Alles löschen?',`Alle ${entries.length} Einträge werden dauerhaft gelöscht.`,'Alles löschen',()=>{
+        entries=[];saveEntries();updateAll();showToast('Alle Einträge gelöscht');
+      });
+    }
+    function askDeleteBudget(){
+      closeBudgetModal();
+      showConfirm('💰','Budget löschen?','Das gesetzte Budget wird entfernt.','Löschen',()=>{
+        budget=0;localStorage.removeItem('jp_budget');updateAll();showToast('Budget gelöscht');
+      });
+    }
+    function askDeleteCat(id){
+      const c=cats.find(x=>x.id===id);
+      showConfirm('🗂️','Kategorie löschen?',`"${c?.label}" wird gelöscht. Bestehende Einträge bleiben erhalten.`,'Löschen',()=>{
+        cats=cats.filter(x=>x.id!==id);
+        if(selectedCat===id)selectedCat=cats[0]?.id;
+        saveCats();buildCatGrid();renderManageList();showToast('Kategorie gelöscht');
+      });
+    }
+
+    function openManageModal(){renderManageList();document.getElementById('manageModal').classList.remove('hidden');}
+    function closeManageModal(){document.getElementById('manageModal').classList.add('hidden');buildCatGrid();updateStats();}
+    function renderManageList(){
+      document.getElementById('manageCatList').innerHTML=cats.map((c,i)=>`
+        <div class="manage-cat-item">
+          <span class="manage-cat-icon">${c.icon}</span>
+          <span class="manage-cat-label">${c.label}</span>
+          <div class="manage-cat-btns">
+            <button class="manage-cat-up" onclick="moveCat(${i},-1)" ${i===0?'disabled style="opacity:.3"':''}>↑</button>
+            <button class="manage-cat-dn" onclick="moveCat(${i},1)" ${i===cats.length-1?'disabled style="opacity:.3"':''}>↓</button>
+            <button class="manage-cat-del" onclick="askDeleteCat('${c.id}')">✕</button>
+          </div>
+        </div>`).join('');
+    }
+    function moveCat(idx,dir){
+      const n=idx+dir;if(n<0||n>=cats.length)return;
+      [cats[idx],cats[n]]=[cats[n],cats[idx]];saveCats();renderManageList();
+    }
+    function openAddCatModal(){
+      selectedEmoji=EMOJI_LIST[0];
+      document.getElementById('newCatName').value='';
+      document.getElementById('emojiPicker').innerHTML=EMOJI_LIST.map((e,i)=>`<span class="emoji-opt${i===0?' selected-emoji':''}" onclick="selectEmoji('${e}',this)">${e}</span>`).join('');
+      document.getElementById('addCatModal').classList.remove('hidden');
+    }
+    function closeAddCatModal(){document.getElementById('addCatModal').classList.add('hidden');}
+    function selectEmoji(e,el){selectedEmoji=e;document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('selected-emoji'));el.classList.add('selected-emoji');}
+    function saveNewCat(){
+      const name=document.getElementById('newCatName').value.trim();
+      if(!name){showToast('Bitte einen Namen eingeben');return;}
+      cats.push({id:'custom_'+Date.now(),icon:selectedEmoji,label:name});
+      saveCats();closeAddCatModal();renderManageList();showToast(`✓ "${name}" hinzugefügt`);
+    }
+
+    function updateHeader(){
+      const spent=totalSpent(),s=sym();
+      document.getElementById('totalSpent').textContent=fmt(spent);
+      const pct=budget>0?Math.min(spent/budget,1):0,circ=188.5;
+      const ring=document.getElementById('ringFill');
+      ring.style.strokeDashoffset=circ-pct*circ;
+      ring.style.stroke=pct>0.85?'#e74c3c':pct>0.6?'#e67e22':'#27ae60';
+      document.getElementById('ringPct').textContent=budget>0?Math.round(pct*100)+'%':'–';
+      document.getElementById('budgetDisplay').textContent=budget>0?s+fmt(budget):'kein Budget';
+      const badge=document.getElementById('remainingBadge');
+      if(budget>0){
+        const rem=budget-spent;
+        badge.textContent=rem>=0?`${s}${fmt(rem)} übrig`:`${s}${fmt(Math.abs(rem))} überzogen`;
+        badge.className='budget-remaining'+(rem<0?' danger':'');
+      }else{badge.textContent='–';badge.className='budget-remaining';}
+      applyAllSettings();
+    }
+
+    function getSorted(){
+      const copy=[...entries];
+      if(currentSort==='amount_desc')return copy.sort((a,b)=>b.amount-a.amount);
+      if(currentSort==='amount_asc') return copy.sort((a,b)=>a.amount-b.amount);
+      if(currentSort==='cat') return copy.sort((a,b)=>(a.cat||'').localeCompare(b.cat||''));
+      if(currentSort==='city')return copy.sort((a,b)=>(a.location||'\uFFFF').localeCompare(b.location||'\uFFFF'));
+      return copy;
+    }
+    function groupKey(e){
+      if(currentSort==='date')return new Date(e.date).toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+      if(currentSort==='city')return e.location||'📍 Kein Ort';
+      if(currentSort==='cat'){const c=cats.find(x=>x.id===e.cat);return c?c.icon+' '+c.label:e.cat;}
+      return '💰 Alle Ausgaben';
+    }
+    function updateHistory(){
+      const el=document.getElementById('historyList'),s=sym();
+      if(!entries.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🗾</div><p>Noch keine Ausgaben.<br>Füge deine erste Ausgabe hinzu!</p></div>`;return;}
+      const sorted=getSorted(),groups={},order=[];
+      sorted.forEach(e=>{const k=groupKey(e);if(!groups[k]){groups[k]=[];order.push(k);}groups[k].push(e);});
+      el.innerHTML=order.map(key=>{
+        const items=groups[key],total=items.reduce((x,i)=>x+i.amount,0);
+        const rows=items.map(e=>`
+          <div class="entry">
+            <div class="entry-icon">${e.icon}</div>
+            <div class="entry-body">
+              <div class="entry-desc">${e.desc}</div>
+              <div class="entry-meta">
+                <span>${cats.find(c=>c.id===e.cat)?.label||e.cat}</span>
+                ${e.location?`<span class="entry-loc-tag">📍 ${e.location}</span>`:''}
+              </div>
+            </div>
+            <div class="entry-amount">${s}${fmt(e.amount)}</div>
+            <button class="entry-delete" onclick="askDeleteEntry(${e.id})">×</button>
+          </div>`).join('');
+        return `<div class="day-group"><div class="day-label"><span>${key}</span><span class="day-total">${s}${fmt(total)}</span></div>${rows}</div>`;
+      }).join('');
+    }
+
+    function switchStatTab(tab){
+      currentStatTab=tab;
+      document.getElementById('statTabCat').classList.toggle('active',tab==='cat');
+      document.getElementById('statTabCity').classList.toggle('active',tab==='city');
+      updateStats();
+    }
+    function updateStats(){
+      const el=document.getElementById('catStats'),s=sym();
+      document.getElementById('statsPanelTitle').textContent=currentStatTab==='cat'?'Nach Kategorie':'Nach Stadt';
+      if(currentStatTab==='cat'){
+        const totals={};cats.forEach(c=>totals[c.id]=0);
+        entries.forEach(e=>{totals[e.cat]=(totals[e.cat]||0)+e.amount;});
+        const max=Math.max(...Object.values(totals),1),spent=totalSpent();
+        el.innerHTML=cats.map(c=>{
+          const amt=totals[c.id]||0,share=spent>0?Math.round(amt/spent*100):0;
+          return `<div class="stat-row"><span class="stat-icon">${c.icon}</span><div class="stat-body">
+            <div class="stat-name-row"><span class="stat-name-left">${c.label} <small style="color:#999;font-weight:400">${share}%</small></span><span style="font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0">${s}${fmt(amt)}</span></div>
+            <div class="stat-bar-bg"><div class="stat-bar" style="width:${(amt/max)*100}%;background:var(--accent)"></div></div>
+          </div></div>`;
+        }).join('');
+      }else{
+        const ct={},cc={};
+        entries.forEach(e=>{const city=e.location||'(Kein Ort)';ct[city]=(ct[city]||0)+e.amount;cc[city]=(cc[city]||0)+1;});
+        const sorted=Object.entries(ct).sort((a,b)=>b[1]-a[1]);
+        if(!sorted.length){el.innerHTML=`<div class="no-cities">Noch keine Orte gespeichert.<br>Füge beim nächsten Eintrag eine Stadt hinzu! 📍</div>`;return;}
+        const max=sorted[0][1],spent=totalSpent();
+        const colors=['#C0392B','#2980b9','#27ae60','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50'];
+        el.innerHTML=sorted.map(([city,amt],i)=>{
+          const share=spent>0?Math.round(amt/spent*100):0,color=colors[i%colors.length];
+          return `<div class="stat-row"><span class="stat-icon">📍</span><div class="stat-body">
+            <div class="stat-name-row"><span class="stat-name-left">${city} <small style="color:#999;font-weight:400">${share}%</small> <small style="color:var(--ink-soft)">${cc[city]}×</small></span><span style="font-size:13px;font-weight:600;color:${color};flex-shrink:0">${s}${fmt(amt)}</span></div>
+            <div class="stat-bar-bg"><div class="stat-bar" style="width:${(amt/max)*100}%;background:${color}"></div></div>
+          </div></div>`;
+        }).join('');
+      }
+    }
+
+    function exportPDF(){
+      if(!entries.length){showToast('Keine Einträge zum Exportieren');return;}
+      showToast('📄 PDF wird erstellt…');
+      try{
+        const {jsPDF}=window.jspdf;
+        const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const s=sym(),spent=totalSpent(),name=gs('tripName')||'Japan',W=210,margin=18;
+        doc.setFillColor(26,20,16);doc.rect(0,0,W,30,'F');
+        doc.setTextColor(255,255,255);doc.setFontSize(18);doc.setFont('helvetica','bold');
+        doc.text(name+' Reise — Ausgaben',margin,14);
+        doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,180,180);
+        doc.text('Exportiert am '+new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'}),margin,22);
+        let y=40;
+        doc.setFillColor(250,246,240);doc.roundedRect(margin,y,W-margin*2,22,3,3,'F');
+        doc.setTextColor(26,20,16);doc.setFontSize(11);doc.setFont('helvetica','bold');
+        doc.text('Gesamt ausgegeben',margin+6,y+8);doc.setFontSize(16);doc.text(s+fmt(spent),margin+6,y+17);
+        if(budget>0){
+          doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+          const rem=budget-spent;
+          doc.text(rem>=0?`Budget: ${s}${fmt(budget)} · ${s}${fmt(rem)} übrig`:`Budget: ${s}${fmt(budget)} · ${s}${fmt(Math.abs(rem))} überzogen`,margin+60,y+17);
+        }
+        y+=30;
+        const totals={};cats.forEach(c=>totals[c.id]=0);entries.forEach(e=>{totals[e.cat]=(totals[e.cat]||0)+e.amount;});
+        const catData=cats.filter(c=>totals[c.id]>0).sort((a,b)=>totals[b.id]-totals[a.id]);
+        if(catData.length){
+          doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);doc.text('NACH KATEGORIE',margin,y);y+=5;
+          const colW=(W-margin*2)/Math.min(catData.length,4);
+          catData.slice(0,8).forEach((c,i)=>{
+            const col=i%4,row=Math.floor(i/4),cx=margin+col*colW,cy=y+row*14;
+            doc.setFillColor(255,255,255);doc.roundedRect(cx,cy,colW-3,12,2,2,'F');
+            doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(74,63,53);doc.text(c.label,cx+4,cy+5);
+            doc.setFont('helvetica','bold');doc.setTextColor(192,57,43);doc.text(s+fmt(totals[c.id]),cx+4,cy+10);
+          });
+          y+=Math.ceil(catData.length/4)*14+8;
+        }
+        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);doc.text('ALLE AUSGABEN',margin,y);y+=5;
+        doc.setFillColor(26,20,16);doc.rect(margin,y,W-margin*2,7,'F');
+        doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+        doc.text('Datum',margin+2,y+5);doc.text('Beschreibung',margin+30,y+5);doc.text('Kategorie',margin+100,y+5);doc.text('Ort',margin+135,y+5);doc.text('Betrag',W-margin-20,y+5);
+        y+=7;
+        const sorted=[...entries].sort((a,b)=>new Date(b.date)-new Date(a.date));
+        let row=0;
+        for(const e of sorted){
+          if(y>275){doc.addPage();y=20;}
+          doc.setFillColor(row%2===0?255:248,row%2===0?255:246,row%2===0?255:242);
+          doc.rect(margin,y,W-margin*2,7,'F');
+          doc.setTextColor(26,20,16);doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+          doc.text(new Date(e.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),margin+2,y+5);
+          doc.text(e.desc.length>28?e.desc.slice(0,26)+'…':e.desc,margin+30,y+5);
+          const catLabel=cats.find(c=>c.id===e.cat)?.label||e.cat;
+          doc.text(catLabel.length>16?catLabel.slice(0,14)+'…':catLabel,margin+100,y+5);
+          doc.text((e.location||'–').slice(0,14),margin+135,y+5);
+          doc.setFont('helvetica','bold');doc.setTextColor(192,57,43);doc.text(s+fmt(e.amount),W-margin-20,y+5);
+          y+=7;row++;
+        }
+        doc.setFillColor(26,20,16);doc.rect(margin,y,W-margin*2,8,'F');
+        doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
+        doc.text('Gesamt',margin+2,y+5.5);doc.text(s+fmt(spent),W-margin-20,y+5.5);
+        const tripName=(gs('tripName')||'Japan').replace(/[^a-zA-Z0-9]/g,'_');
+        const filename=`${tripName}_Ausgaben_${new Date().toISOString().slice(0,10)}.pdf`;
+        if(typeof AndroidBridge!=='undefined'){
+          const base64=doc.output('datauristring').split(',')[1];
+          AndroidBridge.savePDF(base64,filename);
+          showToast('✓ PDF in Downloads gespeichert!');
+        }else{
+          doc.save(filename);
+          showToast('✓ PDF gespeichert!');
+        }
+      }catch(err){console.error(err);showToast('Fehler beim PDF-Export');}
+    }
+
+    function updateAll(){updateHeader();updateHistory();updateStats();}
+    function showPage(name,idx){
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.getElementById('page-'+name).classList.add('active');
+      document.querySelectorAll('.tab')[idx]?.classList.add('active');
+      if(name==='plan')renderPlan();
+    }
+    function openBudgetModal(){document.getElementById('budgetInput').value=budget||'';document.getElementById('budgetModal').classList.remove('hidden');}
+    function closeBudgetModal(){document.getElementById('budgetModal').classList.add('hidden');}
+    function saveBudget(){
+      const v=parseFloat(document.getElementById('budgetInput').value);
+      if(v>0){budget=v;localStorage.setItem('jp_budget',v);updateAll();showToast('🎯 Budget: '+sym()+fmt(v));}
+      closeBudgetModal();
+    }
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      t.textContent=msg;t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2400);
+    }
+
+    ['budgetModal','confirmModal','manageModal','addCatModal','settingsModal','sortSheet','planEditModal','planInfoModal'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.addEventListener('click',e=>{if(e.target===el)el.classList.add('hidden');});
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('#locationFieldRow'))document.getElementById('locationSuggestions').classList.remove('visible');
+    });
+
+    // ── PLAN DATA ─────────────────────────────────────────────
+    const DEFAULT_PLAN=[
+    {day:1,date:'25.04.',city:'Tokio',transport:'Flug → Narita/Haneda · dann Suica/Pasmo kaufen & Zug zum Hotel',
+     sections:[
+      {label:'Ankommen',items:[{text:'Landen, Gepäck abholen, durch Zoll'},{text:'IC-Karte (Suica/Pasmo) am Flughafen kaufen',badge:'wichtig'},{text:'Hotel einchecken, Gepäck abstellen'},{text:'Erholen — kein volles Programm heute'}]},
+      {label:'Abends',items:[{text:'Spontan das Stadtviertel ums Hotel erkunden'},{text:'Konbini-Erlebnis: 7-Eleven oder FamilyMart — erste Onigiri & Bento'},{text:'Garten vom Hotel besuchen falls vorhanden'}]},
+     ],tip:'Kein volles Programm am Anreisetag — Jetlag einplanen! Suica/Pasmo am Flughafen holen, spart viel Zeit.'},
+    {day:2,date:'26.04.',city:'Tokio · Harajuku & Shibuya',transport:'U-Bahn (Suica)',
+     sections:[
+      {label:'Morgens (Harajuku)',items:[{text:'Meiji Schrein — früh hin, ruhige Atmosphäre'},{text:'Yoyogi-Park — entspannen, Picknick'},{text:'Takeshita Street — Crepes & verrückte Mode'}]},
+      {label:'Mittags / Nachmittags (Shibuya)',items:[{text:'Shibuya Crossing — Muss! Auch von oben fotografieren'},{text:'3D Billboard an der Ecke Shibuya Scramble'},{text:'Hachiko Statue — kurzer Stopp'},{text:'Shibuya Sky Aussichtsplattform — Tickets vorbuchen!',badge:'ticket'}]},
+      {label:'Abends',items:[{text:'Roboter Café — unbedingt vorbuchen!',badge:'ticket'},{text:'Turmbar — Drinks mit Aussicht'},{text:'Round 1 Stadium in Shibuya — riesiges Spielcenter'}]},
+     ],tip:'Roboter Café: Tickets Wochen im Voraus! Shibuya Sky bei Sonnenuntergang buchen — sonst ausverkauft.'},
+    {day:3,date:'27.04.',city:'Tokio · Shinjuku',transport:'U-Bahn (Suica)',
+     sections:[
+      {label:'Tagsüber',items:[{text:'Omoide Yokocho (Memory Lane) — enge Gassen, Yakitori'},{text:'Kabukicho Entertainment District — tagsüber erkunden'},{text:'Samurai & Ninja Museum Tokio — interaktive Tour',badge:'ticket'},{text:'Spontanes Mittagessen in Shinjuku'}]},
+      {label:'Abends',items:[{text:'Kabukicho abends — nochmal durch die Neonlichter'},{text:'Ginza Viertel — Abendspaziergang & Luxusmeile'}]},
+     ],tip:'Samurai Museum: Tickets online vorbuchen. Kabukicho: Vorsicht bei aufdringlichen Werbern.'},
+    {day:4,date:'28.04.',city:'Tokio · Asakusa & Akihabara',transport:'U-Bahn: Asakusa-Linie → Asakusa, dann Hibiya-Linie → Akihabara',
+     sections:[
+      {label:'Morgens (Asakusa)',items:[{text:'Senso-ji Tempel — früh hin (vor 9 Uhr = kaum Touristen!)'},{text:'Nakamise Street — in den Seitengassen kaufen, dort billiger!'},{text:'Asakusa Shrine (Asakusa-jinja) — direkt daneben'},{text:'Kimono-Erlebnis in Asakusa'}]},
+      {label:'Nachmittags (Akihabara)',items:[{text:'Tamashii Nations Store — offizielle Figuren & Merchandise'},{text:'Spielhallen erkunden — mehrere Stockwerke Arcade'},{text:'Round 1 Stadium Akihabara'}]},
+      {label:'Abends',items:[{text:'Tokyo Skytree (Sumida) — bei Dämmerung'}]},
+     ],tip:'Skytree: Tickets vor Ort oder online. Seitengassen neben Nakamise: Snacks zu halben Preisen.'},
+    {day:5,date:'29.04.',city:'Nikko (Tagesausflug)',transport:'Zug: Asakusa → Nikko (Tobu-Linie, ca. 2h) · JR Pass oder Nikko Pass',
+     sections:[
+      {label:'Früh los (6–7 Uhr)',items:[{text:'Tosho-gu Schrein — UNESCO Welterbe, überwältigend verziert'},{text:'Futarasan Schrein & Taiyuin-Mausoleum'},{text:'Kegon-Wasserfall — 97m hoch, kurzer Umweg'}]},
+     ],tip:'JR Pass oder Nikko Pass nutzen. Früh genug zurück — nicht im Berufsverkehr stecken.'},
+    {day:6,date:'30.04.',city:'Tokio · Odaiba',transport:'Yurikamome-Bahn oder Rinkai-Linie · ab Shimbashi',
+     sections:[
+      {label:'Tagsüber',items:[{text:'Rainbow Bridge überqueren / ansehen'},{text:'Freiheitsstatue Tokio — kurzer Fotostopp'},{text:'Odaiba Beach — entspannen mit Blick auf die Skyline'},{text:'Gundam Statue (1:1 Full Scale)'},{text:'Azabudai Hills — neues Megaprojekt 2023'}]},
+      {label:'Nachmittags / Abends',items:[{text:'TeamLab Planets — Tickets WOCHEN im Voraus buchen!',badge:'ticket'}]},
+     ],tip:'TeamLab Planets: Früh oder spät buchen = weniger Gedränge. Socken ausziehen — man läuft durch Wasser.'},
+    {day:7,date:'01.05.',city:'Hakone',transport:'Odakyu Romance Car: Shinjuku → Hakone-Yumoto (ca. 85 Min.) · Hakone Free Pass kaufen',
+     sections:[
+      {label:'Anreise & Aktivieren',items:[{text:'Hakone Free Pass aktivieren'}]},
+      {label:'Tagsüber',items:[{text:'Fuji-Blick (Owakudani / Ashi-See) — wetterabhängig!'},{text:'Seilbahn Komagatake / Owakudani'},{text:'Vulkanlandschaft Owakudani — schwarze Eier essen!'},{text:'Ashi-See Bootsfahrt mit Fuji-Panorama'}]},
+      {label:'Abends',items:[{text:'Onsen im Ryokan — traditionell übernachten',badge:'flexibel'}]},
+     ],tip:'Hakone Free Pass buchen (deckt alle Verkehrsmittel). Fuji-Sicht ist wetterabhängig — Morgen hat beste Chancen!'},
+    {day:8,date:'02.05.',city:'Hakone → Tokio',transport:'Odakyu-Linie zurück nach Tokio (mit Hakone Free Pass)',
+     sections:[
+      {label:'Morgens (Optional)',items:[{text:'Onsen ausgiebig genießen — Ryokan-Frühstück nicht verpassen'},{text:'Hakone Open Air Museum — Skulpturen & Picasso-Werke',badge:'flexibel'}]},
+      {label:'Rückreise',items:[{text:'Puffertag: Rückkehr nach Tokio & entspannen'}]},
+     ],tip:'Puffertag — ideal für Nachholung oder reine Entspannung.'},
+    {day:9,date:'03.05.',city:'Yokohama (Tagesausflug)',transport:'JR Tōkaidō-Linie: Tokio → Yokohama (ca. 30 Min., mit Suica)',
+     sections:[
+      {label:'Tagsüber',items:[{text:'Chinatown Yokohama — größte Japans, Dim Sum & Bao'},{text:'Cosmo World Vergnügungspark — Riesenrad am Wasser'},{text:'Cup Noodles Museum — eigene Nudelsuppe kreieren (Pflicht!)'},{text:'Yamashita Park & Hafenpromenade — entspannt schlendern'}]},
+     ]},
+    {day:10,date:'04.05.',city:'Fuji-Gegend',transport:'Zug: Tokio → Fujikawaguchiko (ca. 2h, Fujikyuko-Linie) · nur bei klarem Himmel!',
+     sections:[
+      {label:'Nur bei klarem Himmel!',items:[{text:'Arakurayama Sengen Park — Chureito-Pagode mit Fuji-Blick'},{text:'Lawson am Fuji — berühmtestes Convenience-Store-Foto der Welt'},{text:'Kogamasao Memorial Park — weiterer Fuji-Aussichtspunkt'},{text:'Fuji Bridge (Wanizuka-Brücke) — Fuji spiegelt sich im See'},{text:'Hozugawa River Bootsfahrt',badge:'flexibel'}]},
+     ],tip:'Wetter am Vortag prüfen! Früh (7–9 Uhr) ist die Sicht am besten. Chureito-Pagode: Treppen bergauf, lohnt sich!'},
+    {day:11,date:'05.05.',city:'Tokio · Puffer & Optional',transport:'Ashikaga Flower Park: Tokio → Tomita (ca. 2h, Ryomo-Linie) · sonst U-Bahn',
+     sections:[
+      {label:'Optionen',items:[{text:'Ashikaga Flower Park — blühende Wisteria-Tunnel, April/Mai Hauptsaison!'},{text:'Messer selber machen — Workshop in Tokio buchbar'},{text:'Ring selber machen — Silberschmiede-Workshop'},{text:'Sumo Show — wenn Turnier stattfindet (Ryogoku Kokugikan)'},{text:'Einkaufen: Ginza, Harajuku, Akihabara nochmals'}]},
+     ],tip:'Ashikaga Flower Park: Ende April/Anfang Mai ist PEAK-Saison. Früh buchen!'},
+    {day:12,date:'06.05.',city:'Kyoto',transport:'Shinkansen: Tokio → Kyoto (ca. 2h 15 Min., Tokaido-Shinkansen)',
+     sections:[
+      {label:'Morgens',items:[{text:"Philosopher's Path (2km) — morgens kaum Touristen"},{text:'Ginkaku-ji (Silberner Tempel)'},{text:'Adashino Nenbutsu-ji — abgelegener Tempel im Sagano-Wald'}]},
+      {label:'Nachmittags',items:[{text:'Kiyomizu-dera — für Sonnenuntergang einplanen (Tickets bis 17 Uhr)'},{text:'Yasaka Pagode Fotospot — auf dem Weg durch Gion'}]},
+      {label:'Abends',items:[{text:'Gion Viertel — Geisha-Viertel, Abend beste Zeit für Sichtungen'},{text:'KICHIKICHI — legendäres Omakette Omurice Restaurant',badge:'wichtig'},{text:'New TeamLab Biovortex Kyoto'}]},
+     ],tip:'KICHIKICHI: Reservierung Wochen/Monate vorher! Gion abends: Geishas respektvoll behandeln.'},
+    {day:13,date:'07.05.',city:'Kyoto · Arashiyama',transport:'Randen-Bahn oder Bus nach Arashiyama (ca. 30 Min.)',
+     sections:[
+      {label:'Früh morgens (vor 8 Uhr!)',items:[{text:'Arashiyama Bambuswald — VOR 8 Uhr = fast allein!'},{text:'Tenryu-ji Garten — UNESCO Weltkulturerbe'},{text:'Kimono Forest (Randen Station)'},{text:'Hozugawa River Bootsfahrt ab Kameoka',badge:'flexibel'}]},
+      {label:'Mittags',items:[{text:'Kinkaku-ji (Goldener Tempel) — Tickets direkt vor Ort'},{text:'Burg Nijo — vor 16 Uhr Einlass!'}]},
+      {label:'Nachmittags / Abends',items:[{text:'Teezeremonie im Kimono',badge:'ticket'},{text:'Kyoto Kimono Rental HANAEMI'},{text:'Gion Viertel nochmals (abends besonders schön)'},{text:'Fushimi Inari Schrein — bei Dämmerung für Toriis im Licht'}]},
+     ],tip:'Arashiyama: 6:30–7:30 Uhr fast allein. Fushimi Inari: ganzen Berg (2–3h) für Ruhe oben.'},
+    {day:14,date:'08.05.',city:'Kyoto · Museen & Kultur',transport:'Bus / U-Bahn innerhalb Kyoto',
+     sections:[
+      {label:'Tagsüber',items:[{text:'Nintendo Museum — Tickets online (Lotteriesystem!)',badge:'ticket'},{text:'International Manga Museum',badge:'ticket'},{text:'KYOTO SAMURAI WALK — geführte Tour im Samurai-Kostüm'},{text:'Kaiserpalast Kyoto — kostenlose Führung',badge:'free'}]},
+     ],tip:'Nintendo Museum: per Lotterie — so früh wie möglich anmelden! Nur 1 Spiel-Token pro Person.'},
+    {day:15,date:'09.05.',city:'Kyoto → Osaka',transport:'Shinkansen oder Hankyu-Linie: Kyoto → Osaka (ca. 15–30 Min.)',
+     sections:[
+      {label:'Morgens (Kyoto)',items:[{text:'Gepäck im Hotel lassen oder Coin Locker am Bahnhof'},{text:'Giouji Tempel — moosbedeckt, versteckt, sehr ruhig'},{text:'Nishiki Market — Kyotos Küche, Snacks & Pickles'}]},
+      {label:'Nachmittags → Osaka',items:[{text:'Mit Zug nach Osaka'},{text:'Osaka Unterkunft einchecken — AB HEUTE BUCHEN!',badge:'wichtig'},{text:'Osaka Viertel erkunden, Namba'}]},
+     ],tip:'Osaka Unterkunft frühzeitig buchen — das ist WICHTIG!'},
+    {day:16,date:'10.05.',city:'Osaka · Dotonbori',transport:'Osaka Metro (Midosuji-Linie) · Tagesticket lohnt sich',
+     sections:[
+      {label:'Tagsüber',items:[{text:'Dotonbori — DAS Herz von Osaka, Kani-Doraku Krabbe, Glico-Mann Foto'},{text:'Namba erkunden — Shoppen, Essen, Atmosphäre'},{text:'Küchenutensilien Viertel (Doguya-suji)'},{text:'Donguri Kyowakoku (Ghibli Store)'},{text:'Love Shrine (Namba Yasaka Shrine) — riesiges Löwenmaul'}]},
+      {label:'Abends',items:[{text:'Shinsekai Viertel — Retro-Osaka, Kushikatsu essen!'},{text:'Sumiyoshi Taisha Schrein — abends stimmungsvoll'}]},
+     ]},
+    {day:17,date:'11.05.',city:'Osaka · Castle & Umeda',transport:'Osaka Metro intrastadt',
+     sections:[
+      {label:'Morgens',items:[{text:'Osaka Castle & Schlosspark — morgens wenige Touristen'},{text:'Katsuoji Tempel — Daruma-Puppen-Tempel auf dem Berg'}]},
+      {label:'Nachmittags',items:[{text:'Umeda Sky Building — Floating Garden Aussichtsplattform'}]},
+     ]},
+    {day:18,date:'12.05.',city:'Osaka · Universal Studios Japan',transport:'JR Sakurajima-Linie: Osaka → Universal City (ca. 15 Min.)',
+     sections:[
+      {label:'Ganztagesticket',items:[{text:'Universal Studios Japan — Tickets & Express Pass vorbuchen!',badge:'ticket'},{text:'Harry Potter World — Highlight!'},{text:'Super Nintendo World — Highlight!'}]},
+     ],tip:'Express Pass lohnt sich an Wochenenden/Feiertagen. Nintendo World: Mario Kart-Reservierung in der App am Morgen sichern!'},
+    {day:19,date:'13.05.',city:'Hiroshima & Miyajima',transport:'Shinkansen: Osaka → Hiroshima (ca. 50 Min.) · Fähre: Hiroshima → Miyajima (ca. 10 Min.)',
+     sections:[
+      {label:'Früh los (7 Uhr)',items:[{text:'Friedenspark & Atommodenkuppel (Genbaku Dome) — sehr bewegend'},{text:'Friedensmuseum — mindestens 2 Stunden einplanen!'},{text:'Hiroshima Okonomiyaki essen — andere Art als Osaka!'},{text:'Mit Fähre nach Miyajima — schwimmende Torii von Itsukushima'}]},
+     ],tip:'Friedensmuseum: sehr emotional, Zeit einplanen. Miyajima nur wenn ausreichend Zeit bleibt.'},
+    {day:20,date:'14.05.',city:'Osaka → Tokio',transport:'Shinkansen: Osaka → Tokio (ca. 2h 30 Min.) · Fuji-Blick: rechte Seite!',
+     sections:[
+      {label:'Morgens',items:[{text:'Frühstück in Osaka — Takoyaki oder Tamago Sando'},{text:'Falls noch nicht: Küchenutensilien oder Ghibli Store',badge:'flexibel'}]},
+      {label:'Nachmittags (Tokio)',items:[{text:'Shinkansen nach Tokio — Fuji rechte Seite im Zug!'},{text:'Sumo Show / Turnier in Ryogoku — Mai ist Turniermonat!',badge:'flexibel'},{text:'Messer selber machen — Workshop (Kappabashi)'},{text:'Ring selber machen — Silberschmied-Workshop'}]},
+     ]},
+    {day:21,date:'15.05.',city:'Tokio · Großes Finale',transport:'U-Bahn innerhalb Tokio (Suica)',
+     sections:[
+      {label:'Optionen',items:[{text:'Messer selber machen — Workshop'},{text:'Ring selber machen — Silberschmiede'},{text:'Großes Einkaufen: Ginza, Harajuku, Akihabara, Shibuya'},{text:'Tokio nochmals genießen'}]},
+     ],tip:'Don Quijote (Donki) ist günstigstes Souvenir-Kaufhaus. Duty-Free am Flughafen für Whisky & Sake lohnt sich!'},
+    {day:22,date:'16./17.05.',city:'Tokio · Abreisetag',transport:'Narita Express oder Limousine Bus: Tokio → Narita/Haneda (ca. 60–90 Min.)',
+     sections:[
+      {label:'Abreise',items:[{text:'Letztes Frühstück in Tokio genießen'},{text:'Koffer packen & Hotel auschecken'},{text:'Rückflug 17.05. — Check-in 3h vorher am Flughafen!',badge:'wichtig'}]},
+     ],tip:'Duty-Free am Flughafen für Whisky & Sake lohnt sich! Don Quijote ist das günstigste Souvenir-Kaufhaus.'},
+    ];
+
+    let planData=JSON.parse(localStorage.getItem('jp_plan')||'null');
+    if(!planData){
+      planData=DEFAULT_PLAN.map(d=>({
+        ...d,transport:d.transport||'',tip:d.tip||'',
+        sections:d.sections.map(s=>({label:s.label,items:s.items.map(it=>({...it,checked:false}))}))
+      }));
+    }
+    let planSort='day',planEditIdx=null;
+
+    function refreshPlan(){
+      const btn=document.querySelector('.plan-icon-btn[title="Aktualisieren"]');
+      if(btn){btn.style.transform='rotate(360deg)';btn.style.transition='transform 0.5s ease';setTimeout(()=>{btn.style.transform='';btn.style.transition='';},500);}
+      if(window._firebaseSyncEnabled && window._fbGetPlanOnce){
+        setSyncState('syncing');
+        window._fbGetPlanOnce().then(remoteData=>{
+          if(remoteData && Array.isArray(remoteData) && remoteData.length>0){
+            planData=remoteData.map(d=>({...d,transport:d.transport||'',tip:d.tip||'',
+              sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it}))}))
+            }));
+            localStorage.setItem('jp_plan',JSON.stringify(planData));
+            renderPlan();
+            setSyncState('online');
+            showToast('✓ Plan aktualisiert');
+          } else {
+            setSyncState('online');
+            showToast('Plan ist bereits aktuell');
+          }
+        }).catch(()=>{setSyncState('error');showToast('Fehler beim Aktualisieren');});
+      } else {
+        renderPlan();
+        showToast('✓ Plan neu geladen');
+      }
+    }
+
+    // ── SAVE PLAN (local + Firebase) ──────────────────────────
+    async function savePlan() {
+      localStorage.setItem('jp_plan', JSON.stringify(planData));
+      if(window._firebaseSyncEnabled && window._fbSavePlan) {
+        setSyncState('syncing');
+        _ignoreNextFbUpdate = true;
+        const ok = await window._fbSavePlan(planData);
+        setSyncState(ok ? 'online' : 'error');
+        setTimeout(() => { _ignoreNextFbUpdate = false; }, 1500);
+      }
+    }
+
+    // ── INIT FIREBASE SUBSCRIPTION ────────────────────────────
+    function initFirebaseSync() {
+      if(!window._firebaseSyncEnabled || !window._fbSubscribePlan) {
+        setSyncState('offline');
+        return;
+      }
+      setSyncState('syncing');
+      window._fbGetPlanOnce && window._fbGetPlanOnce().then(remoteData => {
+        if(remoteData && Array.isArray(remoteData) && remoteData.length > 0) {
+          const localChecked = {};
+          planData.forEach(d => d.sections.forEach(s => s.items.forEach(it => { if(it.checked) localChecked[it.text]=true; })));
+          planData = remoteData.map(d => ({
+            ...d, transport:d.transport||'', tip:d.tip||'',
+            sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it,checked:it.checked||localChecked[it.text]||false}))}))
+          }));
+          localStorage.setItem('jp_plan', JSON.stringify(planData));
+          renderPlan();
+        } else {
+          window._fbSavePlan(planData);
+        }
+        setSyncState('online');
+      }).catch(() => setSyncState('error'));
+
+      window._fbSubscribePlan(remoteData => {
+        if(_ignoreNextFbUpdate) return;
+        if(!remoteData || !Array.isArray(remoteData)) return;
+        const localChecked = {};
+        planData.forEach(d => d.sections.forEach(s => s.items.forEach(it => { if(it.checked) localChecked[it.text]=true; })));
+        planData = remoteData.map(d => ({
+          ...d, transport:d.transport||'', tip:d.tip||'',
+          sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it,checked:it.checked||localChecked[it.text]||false}))}))
+        }));
+        localStorage.setItem('jp_plan', JSON.stringify(planData));
+        if(document.getElementById('page-plan').classList.contains('active')) renderPlan();
+        setSyncState('online');
+        showToast('🔄 Plan aktualisiert');
+      });
+    }
+
+    function togglePlanItem(dayIdx,secIdx,itemIdx,event){
+      event.stopPropagation();
+      planData[dayIdx].sections[secIdx].items[itemIdx].checked=!planData[dayIdx].sections[secIdx].items[itemIdx].checked;
+      savePlan();
+      const checked=planData[dayIdx].sections[secIdx].items[itemIdx].checked;
+      const itemEl=document.getElementById(`pitem-${dayIdx}-${secIdx}-${itemIdx}`);
+      if(itemEl){
+        itemEl.classList.toggle('plan-item-done',checked);
+        const cb=itemEl.querySelector('.plan-checkbox');
+        if(cb)cb.textContent=checked?'☑':'☐';
+      }
+      const allItems=planData[dayIdx].sections.flatMap(s=>s.items);
+      const doneCount=allItems.filter(it=>it.checked).length;
+      const totalCount=allItems.length;
+      const pct=totalCount>0?Math.round(doneCount/totalCount*100):0;
+      const cardEl=document.getElementById(`pcard-${dayIdx}`);
+      if(cardEl){
+        const fill=cardEl.querySelector('.plan-progress-fill');
+        const label=cardEl.querySelector('.plan-progress-label');
+        if(fill)fill.style.width=pct+'%';
+        if(label)label.textContent=doneCount+'/'+totalCount;
+        const isDone=doneCount===totalCount&&totalCount>0;
+        cardEl.classList.toggle('plan-day-done',isDone);
+        if(isDone)cardEl.classList.add('collapsed');
+      }
+    }
+
+    function togglePlanCollapse(dayIdx){
+      const cardEl=document.getElementById(`pcard-${dayIdx}`);
+      if(!cardEl)return;
+      const nowCollapsed=!cardEl.classList.contains('collapsed');
+      cardEl.classList.toggle('collapsed',nowCollapsed);
+      planData[dayIdx].collapsed=nowCollapsed;
+      savePlan();
+    }
+
+    function openPlanInfo(){document.getElementById('planInfoModal').classList.remove('hidden');}
+
+    function setPlanSort(s){
+      planSort=s;
+      document.getElementById('planSortDay').classList.toggle('active',s==='day');
+      document.getElementById('planSortCity').classList.toggle('active',s==='city');
+      renderPlan();
+    }
+
+    function renderPlan(){
+      const el=document.getElementById('planList');
+      if(!el)return;
+      if(planSort==='city'){
+        const groups={},order=[];
+        planData.forEach((d,i)=>{
+          const k=d.city.split('·')[0].trim().split('→')[0].trim().split('/')[0].trim();
+          if(!groups[k]){groups[k]=[];order.push(k);}
+          groups[k].push({d,i});
+        });
+        el.innerHTML=order.map((city,ci)=>{
+          const color=DAY_PALETTE[ci%DAY_PALETTE.length];
+          return `<div class="plan-city-group">
+            <div class="plan-city-label"><span class="plan-city-dot" style="background:${color}"></span>${city}</div>
+            ${groups[city].map(({d,i})=>planCardHTML(d,i)).join('')}
+          </div>`;
+        }).join('');
+      }else{
+        el.innerHTML=planData.map((d,i)=>planCardHTML(d,i)).join('');
+      }
+    }
+
+    function badgeHTML(badge){
+      if(!badge)return'';
+      const map={ticket:'badge-ticket',free:'badge-free',wichtig:'badge-wichtig',neu:'badge-new',flexibel:'badge-flex'};
+      const labels={ticket:'Ticket 🎟️',free:'kostenlos',wichtig:'wichtig ⚠️',neu:'neu',flexibel:'flexibel'};
+      return `<span class="plan-item-badge ${map[badge]||''}">${labels[badge]||badge}</span>`;
+    }
+
+    function planCardHTML(d,idx){
+      const color=DAY_PALETTE[idx%DAY_PALETTE.length];
+      const allItems=d.sections.flatMap(s=>s.items);
+      const doneCount=allItems.filter(it=>it.checked).length;
+      const totalCount=allItems.length;
+      const progressPct=totalCount>0?Math.round(doneCount/totalCount*100):0;
+      const isDone=doneCount===totalCount&&totalCount>0;
+      const isCollapsed=isDone||!!d.collapsed;
+      const sectionsHTML=d.sections.map((sec,si)=>{
+        const lc=sec.label.toLowerCase();
+        const timeIcon=lc.includes('morgen')||lc.includes('früh')?'🌅':lc.includes('mittag')?'☀️':lc.includes('abend')?'🌙':lc.includes('anreise')||lc.includes('rückreise')||lc.includes('abreise')?'🚄':lc.includes('ankommen')?'✈️':'📍';
+        const itemsHTML=sec.items.map((it,ii)=>{
+          const mapsBtn=it.url?`<button class="plan-maps-btn" onclick="event.stopPropagation();openExternalUrl('${it.url.replace(/'/g,'%27')}')" title="In Google Maps öffnen">🗺️</button>`:'';
+          return `<div class="plan-item${it.checked?' plan-item-done':''}" id="pitem-${idx}-${si}-${ii}" onclick="togglePlanItem(${idx},${si},${ii},event)">
+            <span class="plan-checkbox">${it.checked?'☑':'☐'}</span>
+            <span class="plan-item-text">${it.text}</span>
+            ${badgeHTML(it.badge)}${mapsBtn}
+          </div>`;
+        }).join('');
+        return `<div class="plan-section"><div class="plan-section-label">${timeIcon} ${sec.label}</div>${itemsHTML}</div>`;
+      }).join('');
+      const transportHTML=d.transport?`<div class="plan-transport"><span class="plan-transport-icon">🚄</span><span>${d.transport}</span></div>`:'';
+      const tipHTML=d.tip?`<div class="plan-tip-box">💡 ${d.tip}</div>`:'';
+      return `<div class="plan-card${isCollapsed?' collapsed':''}${isDone?' plan-day-done':''}" id="pcard-${idx}">
+        <div class="plan-card-head" onclick="togglePlanCollapse(${idx})">
+          <div class="plan-day-pill" style="background:${isDone?'#aaa':color}">
+            <div class="plan-day-num">${d.day}</div>
+            <div class="plan-day-date">${d.date}</div>
+          </div>
+          <div class="plan-card-top">
+            <div class="plan-card-city">📍 ${d.city}</div>
+            ${totalCount>0?`<div class="plan-progress-row"><div class="plan-progress-bar"><div class="plan-progress-fill" style="width:${progressPct}%"></div></div><span class="plan-progress-label">${doneCount}/${totalCount}</span></div>`:''}
+          </div>
+          <span class="plan-collapse-arrow">▼</span>
+          <button class="plan-edit-btn" onclick="event.stopPropagation();openPlanEdit(${idx})">✏️</button>
+        </div>
+        ${transportHTML}
+        <div class="plan-card-sections">${sectionsHTML}</div>
+        ${tipHTML}
+      </div>`;
+    }
+
+    function openExternalUrl(url) {
+      let safeUrl = url;
+      if(!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://')) safeUrl = 'https://' + safeUrl;
+      if(safeUrl.includes('#Intent;')) safeUrl = safeUrl.split('#Intent;')[0];
+      const coordMatch = safeUrl.match(/@(-?[\d.]+),(-?[\d.]+)/);
+      const placeMatch = safeUrl.match(/maps\/place\/([^/@]+)/);
+      if(placeMatch) {
+        const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g,' '));
+        safeUrl = 'https://maps.google.com/?q=' + encodeURIComponent(placeName) + (coordMatch ? '&ll='+coordMatch[1]+','+coordMatch[2] : '');
+      } else if(coordMatch) {
+        safeUrl = 'https://maps.google.com/?q=' + coordMatch[1] + ',' + coordMatch[2];
+      }
+      window.location.href = safeUrl;
+    }
+
+    function openPlanEdit(idx){
+      planEditIdx=idx;
+      const d=planData[idx];
+      document.getElementById('planEditSubtitle').textContent=`Tag ${d.day} · ${d.date} · ${d.city}`;
+      document.getElementById('planEditDayNum').value=d.day||'';
+      document.getElementById('planEditDate').value=d.date||'';
+      document.getElementById('planEditCity').value=d.city;
+      document.getElementById('planEditTransport').value=d.transport||'';
+      document.getElementById('planEditTip').value=d.tip||'';
+      const txt=d.sections.map(s=>`[${s.label}]\n${s.items.map(it=>{
+        let line=it.text;
+        if(it.badge)line+=` [${it.badge}]`;
+        if(it.url)line+=` {${it.url}}`;
+        return line;
+      }).join('\n')}`).join('\n\n');
+      document.getElementById('planEditDesc').value=txt;
+      document.getElementById('planEditModal').classList.remove('hidden');
+    }
+    function closePlanEdit(){document.getElementById('planEditModal').classList.add('hidden');planEditIdx=null;}
+    function savePlanEdit(){
+      if(planEditIdx===null)return;
+      const d=planData[planEditIdx];
+      const newDayNum=parseInt(document.getElementById('planEditDayNum').value);
+      if(!isNaN(newDayNum)&&newDayNum>0) d.day=newDayNum;
+      const newDate=document.getElementById('planEditDate').value.trim();
+      if(newDate) d.date=newDate;
+      d.city=document.getElementById('planEditCity').value.trim()||d.city;
+      d.transport=document.getElementById('planEditTransport').value.trim();
+      d.tip=document.getElementById('planEditTip').value.trim();
+      const raw=document.getElementById('planEditDesc').value;
+      const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+      const sections=[];let cur=null;
+      for(const line of lines){
+        if(line.startsWith('[')&&line.endsWith(']')&&!line.slice(1,-1).includes(' ')){
+          if(cur)sections.push(cur);
+          cur={label:line.slice(1,-1),items:[]};
+        }else if(cur){
+          let text=line,badge=undefined,url=undefined;
+          const urlMatch=text.match(/\{([^}]+)\}\s*$/);
+          if(urlMatch){url=urlMatch[1];text=text.slice(0,urlMatch.index).trim();}
+          const badgeMatch=text.match(/\[(\w+)\]\s*$/);
+          if(badgeMatch){badge=badgeMatch[1].toLowerCase();text=text.slice(0,badgeMatch.index).trim();}
+          const existing=d.sections.flatMap(s=>s.items).find(it=>it.text===text);
+          const item={text,checked:existing?.checked||false};
+          if(badge)item.badge=badge;
+          if(url)item.url=url;
+          cur.items.push(item);
+        }
+      }
+      if(cur)sections.push(cur);
+      if(sections.length>0)d.sections=sections;
+      savePlan();closePlanEdit();renderPlan();showToast('✓ Tag gespeichert');
+    }
+
+    function askResetPlan(){
+      showConfirm('🔄','Plan zurücksetzen?',
+        'Der Plan wird auf den Original-Stand zurückgesetzt. Alle Häkchen und Änderungen gehen verloren.',
+        'Zurücksetzen',
+        ()=>{
+          planData=DEFAULT_PLAN.map(d=>({
+            ...d,transport:d.transport||'',tip:d.tip||'',collapsed:false,
+            sections:d.sections.map(s=>({label:s.label,items:s.items.map(it=>({...it,checked:false}))}))
+          }));
+          savePlan();
+          renderPlan();
+          showToast('🔄 Plan zurückgesetzt');
+        }
+      );
+    }
+
+    // Init
+    buildCatGrid();
+    applyAllSettings();
+    updateAll();
+    renderPlan();
+
+    setTimeout(() => {
+      initFirebaseSync();
+    }, 800);
+</script>
+</body>
+</html>
