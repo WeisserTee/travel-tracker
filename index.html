@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>🇯🇵 Japan Tracker</title>
+    <title>🇰🇷 Korea Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Firebase SDK -->
@@ -39,7 +39,7 @@
           const app = initializeApp(FIREBASE_CONFIG);
           db = getDatabase(app);
           // Verwende einen festen Schlüssel — alle Nutzer der App teilen denselben Plan
-          planRef = ref(db, 'japan2025/plan');
+          planRef = ref(db, 'korea2026/plan');
           syncEnabled = true;
           window._firebaseReady = true;
         } catch(e) {
@@ -132,7 +132,7 @@
         body { background:var(--cream); color:var(--ink); font-family:'DM Sans',sans-serif; display:flex; flex-direction:column; transition:background 0.3s,color 0.3s; }
         .status-bar-spacer { height:var(--status-bar); background:var(--header-bg); flex-shrink:0; transition:background 0.3s; }
         header { background:var(--header-bg); color:#fff; padding:10px 20px 14px; position:relative; overflow:hidden; flex-shrink:0; transition:background 0.3s; }
-        header::before { content:'日本'; font-family:'Noto Serif JP',serif; position:absolute; right:-10px; top:-10px; font-size:70px; opacity:0.07; color:var(--gold-light); pointer-events:none; }
+        header::before { content:'한국'; font-family:'Noto Serif JP',serif; position:absolute; right:-10px; top:-10px; font-size:70px; opacity:0.07; color:var(--gold-light); pointer-events:none; }
         .header-top { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
         .torii { font-size:22px; }
         h1 { font-family:'Noto Serif JP',serif; font-size:16px; font-weight:700; }
@@ -297,8 +297,37 @@
         .manage-add-btn { width:100%; margin-top:14px; padding:13px; background:var(--cream); border:1.5px dashed var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink-soft); cursor:pointer; font-weight:500; }
         .export-btn { display:flex; align-items:center; gap:8px; width:100%; margin-top:6px; padding:13px 16px; background:var(--cream); border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); cursor:pointer; font-weight:500; text-align:left; }
         .export-btn:active { background:var(--accent-soft); border-color:var(--accent-border); }
+        /* Collapsible sections (Verlauf, Statistik unter Ausgaben) */
+        .section-collapsible { background:var(--card); border-radius:14px; border:1px solid var(--border); margin-bottom:12px; overflow:hidden; box-shadow:0 2px 8px rgba(26,20,16,0.05); }
+        .section-toggle-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:14px 16px; border:none; background:none; font-family:'DM Sans',sans-serif; cursor:pointer; color:var(--ink); gap:8px; }
+        .section-toggle-btn:active { background:var(--cream); }
+        .section-toggle-left { display:flex; align-items:center; gap:8px; min-width:0; }
+        .section-toggle-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .section-collapsed .section-body { display:none; }
+        .section-body { border-top:1px solid var(--border); padding:14px; }
+        .section-chevron { font-size:11px; color:var(--ink-soft); transition:transform 0.2s; display:inline-block; }
+        .section-collapsed .section-chevron { transform:rotate(-90deg); }
+
+        /* Carousel für Plan */
+        .plan-carousel { display:flex; overflow-x:auto; gap:12px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding:4px 16px 16px; scrollbar-width:none; }
+        .plan-carousel::-webkit-scrollbar { display:none; }
+        .plan-carousel > .plan-card { scroll-snap-align:start; flex-shrink:0; width:85vw; max-width:340px; margin-bottom:0; }
+        .plan-carousel > .plan-city-group { scroll-snap-align:start; flex-shrink:0; width:90vw; max-width:360px; margin-bottom:0; }
+        .plan-carousel > .plan-city-group .plan-card { width:100%; max-width:100%; }
+
+        /* Orteliste unter dem Plan */
+        .places-list { padding:4px 16px 30px; }
+        .places-section-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; margin:14px 0 10px; color:var(--ink); display:flex; align-items:center; gap:8px; }
+        .place-item { display:flex; align-items:center; gap:12px; padding:11px 14px; background:var(--card); border-radius:12px; margin-bottom:8px; border:1px solid var(--border); box-shadow:0 2px 6px rgba(26,20,16,0.04); }
+        .place-day-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .place-info { flex:1; min-width:0; }
+        .place-city-name { font-size:14px; font-weight:600; color:var(--ink); margin-bottom:2px; }
+        .place-date { font-size:11px; color:var(--ink-soft); }
+        .place-maps { background:none; border:none; font-size:15px; cursor:pointer; opacity:0.45; flex-shrink:0; padding:4px; }
+        .place-maps:active { opacity:1; }
+
         /* PLAN */
-        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:14px 16px 0; }
         .plan-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; }
         .plan-sort-wrap { display:flex; gap:6px; align-items:center; }
         .plan-sort-chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:var(--card); font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
@@ -374,7 +403,7 @@
 <header>
     <div class="header-top">
         <span class="torii">⛩️</span>
-        <h1 id="headerTitle">Japan <span>Tracker</span></h1>
+        <h1 id="headerTitle">Korea <span>Tracker</span></h1>
         <span class="sync-dot offline" id="syncDot" title="Sync-Status"></span>
         <button class="settings-btn" onclick="openSettingsModal()">⚙️</button>
     </div>
@@ -398,13 +427,11 @@
     </div>
 </header>
 <div class="tabs">
-    <button class="tab active" onclick="showPage('add',0)">➕ Hinzufügen</button>
-    <button class="tab" onclick="showPage('history',1)">📋 Verlauf</button>
-    <button class="tab" onclick="showPage('stats',2)">📊 Statistik</button>
-    <button class="tab" onclick="showPage('plan',3)">🗓️ Plan</button>
+    <button class="tab active" onclick="showPage('ausgaben',0)">💸 Ausgaben</button>
+    <button class="tab" onclick="showPage('plan',1)">🗓️ Reiseplan</button>
 </div>
 <div class="pages-wrapper">
-    <div class="page active" id="page-add">
+    <div class="page active" id="page-ausgaben">
         <div class="add-page-inner">
             <div class="form-card">
                 <div class="form-title">✚ Ausgabe hinzufügen</div>
@@ -414,12 +441,12 @@
                 </div>
                 <div class="form-row">
                     <label>Beschreibung</label>
-                    <input type="text" id="descInput" placeholder="z.B. Ramen in Kyoto">
+                    <input type="text" id="descInput" placeholder="z.B. Bibimbap in Seoul">
                 </div>
                 <div class="form-row" id="locationFieldRow">
                     <label>📍 Ort / Stadt</label>
                     <div class="location-row">
-                        <input type="text" id="locationInput" placeholder="z.B. Kyoto, Shibuya…" autocomplete="off" oninput="onLocationInput(this.value)">
+                        <input type="text" id="locationInput" placeholder="z.B. Seoul, Myeongdong…" autocomplete="off" oninput="onLocationInput(this.value)">
                         <button class="gps-btn" id="gpsBtn" onclick="getGPSLocation()">📍</button>
                     </div>
                     <div class="location-suggestions" id="locationSuggestions"></div>
@@ -433,52 +460,63 @@
                 </div>
                 <button class="add-btn" onclick="addEntry()">+ Hinzufügen</button>
             </div>
-        </div>
-    </div>
-    <div class="page" id="page-history">
-        <div class="content">
-            <div class="history-header">
-                <div class="history-title">📋 Verlauf</div>
-                <div class="history-controls">
-                    <button class="sort-btn" onclick="openSortSheet()">
-                        <span id="sortBtnIcon">📅</span>
-                        <span id="sortBtnLabel" class="sort-btn-label">Datum</span>
-                        <span class="sort-chevron">▼</span>
-                    </button>
-                    <button class="icon-btn" onclick="exportPDF()" title="PDF">📄</button>
-                    <button class="icon-btn" onclick="askClearAll()">🗑️</button>
+
+            <div class="section-collapsible" id="section-verlauf">
+                <button class="section-toggle-btn" onclick="toggleSection('verlauf')">
+                    <div class="section-toggle-left">
+                        <span class="history-title">📋 Verlauf</span>
+                    </div>
+                    <div class="section-toggle-right">
+                        <button class="sort-btn" onclick="event.stopPropagation();openSortSheet()">
+                            <span id="sortBtnIcon">📅</span>
+                            <span id="sortBtnLabel" class="sort-btn-label">Datum</span>
+                            <span class="sort-chevron">▼</span>
+                        </button>
+                        <button class="icon-btn" onclick="event.stopPropagation();exportPDF()" title="PDF">📄</button>
+                        <button class="icon-btn" onclick="event.stopPropagation();askClearAll()">🗑️</button>
+                        <span class="section-chevron">▼</span>
+                    </div>
+                </button>
+                <div class="section-body">
+                    <div id="historyList"></div>
                 </div>
             </div>
-            <div id="historyList"></div>
-        </div>
-    </div>
-    <div class="page" id="page-stats">
-        <div class="content">
-            <div class="stat-toggle">
-                <button class="stat-toggle-btn active" id="statTabCat" onclick="switchStatTab('cat')">🏷️ Kategorien</button>
-                <button class="stat-toggle-btn" id="statTabCity" onclick="switchStatTab('city')">📍 Städte</button>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-title" id="statsPanelTitle">Nach Kategorie</div>
-                <div id="catStats"></div>
+
+            <div class="section-collapsible section-collapsed" id="section-stats">
+                <button class="section-toggle-btn" onclick="toggleSection('stats')">
+                    <div class="section-toggle-left">
+                        <span class="history-title">📊 Statistik</span>
+                    </div>
+                    <div class="section-toggle-right">
+                        <span class="section-chevron">▼</span>
+                    </div>
+                </button>
+                <div class="section-body">
+                    <div class="stat-toggle">
+                        <button class="stat-toggle-btn active" id="statTabCat" onclick="switchStatTab('cat')">🏷️ Kategorien</button>
+                        <button class="stat-toggle-btn" id="statTabCity" onclick="switchStatTab('city')">📍 Städte</button>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title" id="statsPanelTitle">Nach Kategorie</div>
+                        <div id="catStats"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="page" id="page-plan">
-        <div class="content">
-            <div class="plan-header">
-                <div class="plan-title">🗓️ Reiseplan</div>
-                <div class="plan-sort-wrap">
-                    <button class="plan-icon-btn" onclick="openPlanInfo()" title="Legende">ℹ</button>
-                    <button class="plan-icon-btn" onclick="refreshPlan()" title="Aktualisieren">⟳</button>
-                    <button class="plan-icon-btn" onclick="askResetPlan()" title="Plan zurücksetzen" style="font-size:10px">🔄</button>
-                    <button class="plan-sort-chip active" id="planSortDay" onclick="setPlanSort('day')">📅 Tag</button>
-                    <button class="plan-sort-chip" id="planSortCity" onclick="setPlanSort('city')">📍 Stadt</button>
-                </div>
+        <div class="plan-header">
+            <div class="plan-title">🗓️ Reiseplan</div>
+            <div class="plan-sort-wrap">
+                <button class="plan-icon-btn" onclick="openPlanInfo()" title="Legende">ℹ</button>
+                <button class="plan-icon-btn" onclick="refreshPlan()" title="Aktualisieren">⟳</button>
+                <button class="plan-icon-btn" onclick="askResetPlan()" title="Plan zurücksetzen" style="font-size:10px">🔄</button>
+                <button class="plan-sort-chip active" id="planSortDay" onclick="setPlanSort('day')">📅 Tag</button>
+                <button class="plan-sort-chip" id="planSortCity" onclick="setPlanSort('city')">📍 Stadt</button>
             </div>
-
-            <div id="planList"></div>
         </div>
+        <div class="plan-carousel" id="planList"></div>
+        <div class="places-list" id="placesList"></div>
     </div>
 </div>
 
@@ -490,7 +528,7 @@
             <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">☐/☑</span><div><div style="font-size:13px;font-weight:500">Abhaken</div><div style="font-size:11px;color:var(--ink-soft)">Punkt antippen → abhaken. Alle abgehakt = Tag rutscht nach unten & wird ausgegraut.</div></div></div>
             <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">▼</span><div><div style="font-size:13px;font-weight:500">Ein-/Ausklappen</div><div style="font-size:11px;color:var(--ink-soft)">Kopf der Karte antippen um das Programm ein- oder auszuklappen.</div></div></div>
 
-            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">🗺️</span><div><div style="font-size:13px;font-weight:500">Google Maps</div><div style="font-size:11px;color:var(--ink-soft)">Maps-Link mit {https://maps.google.com/?q=Ort} an Zeile anhängen.</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">🗺️</span><div><div style="font-size:13px;font-weight:500">Kakao Map</div><div style="font-size:11px;color:var(--ink-soft)">Maps-Link mit {https://map.kakao.com/?q=Ort} an Zeile anhängen – oder einfach {Ortsname} für Suche.</div></div></div>
             <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--cream);border-radius:10px"><span style="font-size:20px">↕</span><div><div style="font-size:13px;font-weight:500">Plan teilen</div><div style="font-size:11px;color:var(--ink-soft)">Plan als Code exportieren & an Freunde schicken. Sie importieren ihn mit demselben Button.</div></div></div>
         </div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);margin-bottom:8px">Badges im Programm</div>
@@ -517,13 +555,13 @@
         </div>
 
         <div class="plan-edit-label">Stadt / Ort</div>
-        <input type="text" class="plan-edit-input" id="planEditCity" placeholder="z.B. Kyoto">
+        <input type="text" class="plan-edit-input" id="planEditCity" placeholder="z.B. Seoul · Myeongdong">
         <div class="plan-edit-label">🚄 Anreise / Transport</div>
-        <input type="text" class="plan-edit-input" id="planEditTransport" placeholder="z.B. Shinkansen → Kyoto">
+        <input type="text" class="plan-edit-input" id="planEditTransport" placeholder="z.B. KTX → Busan">
         <div class="plan-edit-label">Programm — [Abschnitt] als Überschrift, Punkte darunter</div>
-        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;line-height:1.5">Maps-Link: <code style="background:var(--cream);padding:1px 5px;border-radius:4px;font-size:10px">{https://maps.google.com/?q=Tokio}</code> an Zeile anhängen</div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-bottom:6px;line-height:1.5">Kakao-Map-Link: <code style="background:var(--cream);padding:1px 5px;border-radius:4px;font-size:10px">{Gyeongbokgung}</code> oder vollständige URL an Zeile anhängen</div>
 
-        <textarea class="plan-edit-textarea" id="planEditDesc" placeholder="[Morgens]&#10;Senso-ji Tempel {https://maps.google.com/?q=Senso-ji}&#10;Nakamise Street [ticket]&#10;&#10;[Abends]&#10;Shibuya Crossing"></textarea>
+        <textarea class="plan-edit-textarea" id="planEditDesc" placeholder="[Morgens]&#10;Gyeongbokgung Palace {Gyeongbokgung}&#10;Insadong [ticket]&#10;&#10;[Abends]&#10;N Seoul Tower"></textarea>
         <div class="plan-edit-label">💡 Tipp</div>
         <input type="text" class="plan-edit-input" id="planEditTip" placeholder="z.B. Frühzeitig buchen!">
         <div class="modal-btns">
@@ -573,7 +611,7 @@
             <div class="settings-row-stacked">
                 <div class="settings-row-label">Reisename</div>
                 <div class="settings-row-sub">Im Header</div>
-                <input type="text" class="settings-text-input" id="setTripName" placeholder="Japan 2025" maxlength="18" oninput="applySetting('tripName',this.value)">
+                <input type="text" class="settings-text-input" id="setTripName" placeholder="Korea 2026" maxlength="18" oninput="applySetting('tripName',this.value)">
             </div>
             <div class="settings-row">
                 <div class="settings-row-left"><div class="settings-row-label">Budget anzeigen als</div><div class="settings-row-sub">Im Header</div></div>
@@ -620,7 +658,7 @@
 <div class="modal-overlay hidden" id="budgetModal">
     <div class="modal">
         <h2>🎯 Budget setzen</h2>
-        <div class="modal-sub">Wie viel möchtest du für Japan ausgeben?</div>
+        <div class="modal-sub">Wie viel möchtest du für Korea ausgeben?</div>
         <input type="number" id="budgetInput" placeholder="z.B. 2000" inputmode="decimal">
         <div class="modal-btns">
             <button class="btn-cancel" onclick="closeBudgetModal()">Abbrechen</button>
@@ -678,7 +716,7 @@
       {id:'drinks',icon:'🍺',label:'Getränke'},{id:'misc',icon:'💴',label:'Sonstiges'},
     ];
     const EMOJI_LIST=['🍜','🍱','🍣','🍛','🍰','☕','🍺','🍶','🚅','🚇','✈️','🚕','🛳️','🚲','🏨','🏕️','🛍️','👘','👟','💄','💍','⛩️','🎡','🎢','🎭','🎮','🎯','🏯','🌸','🗻','🗾','🎌','💊','🏥','💴','💰','📸','🎵','⚡','🔑','🧧','🪄','🎁','🐉','🦊','🌟','🎋','🏮'];
-    const JAPAN_CITIES=['Tokyo','Kyoto','Osaka','Nara','Hiroshima','Sapporo','Yokohama','Nagoya','Fukuoka','Kobe','Nikko','Hakone','Kamakura','Kanazawa','Matsumoto','Takayama','Shibuya','Shinjuku','Akihabara','Asakusa','Ginza','Harajuku','Ueno','Ikebukuro','Nakameguro','Arashiyama','Fushimi','Gion','Dotonbori','Namba'];
+    const JAPAN_CITIES=['Seoul','Busan','Incheon','Myeongdong','Hongdae','Yeonnam','Insadong','Jongno','Seongsu','Yongsan','Itaewon','Gangnam','Sinsa','Jamsil','Gyeongbokgung','Bukchon','Namsan','Banpo','Gimhae','Nampo-dong','Jagalchi','Gwangalli','Haeundae','Gamcheon','Songdo','Yeongjong-do','Chinatown Incheon','Paradise City'];
     const SORT_OPTIONS=[
       {value:'date',icon:'📅',label:'Datum',sub:'Neueste zuerst'},
       {value:'city',icon:'📍',label:'Stadt',sub:'Alphabetisch nach Ort'},
@@ -688,12 +726,12 @@
     ];
     const CURR_SYMS={EUR:'€',JPY:'¥',CHF:'CHF ',USD:'$'};
     const SET_DEF={currency:'EUR',showLocation:true,budgetMode:'total',tripName:'',tripStart:'',tripEnd:'',pinkMode:false};
-    const DAY_PALETTE=['#5B8CFF','#FF6B6B','#4ECDC4','#F7B731','#A55EEA','#26de81','#fd9644','#45aaf2','#fc5c65','#2bcbba','#fed330','#a55eea','#26de81','#fd9644','#45aaf2','#fc5c65','#2bcbba','#fed330','#a55eea','#26de81','#fd9644','#45aaf2'];
+    const DAY_PALETTE=['#9CA3AF','#5B8CFF','#FF6B6B','#4ECDC4','#F7B731','#A55EEA','#26de81','#fd9644','#45aaf2','#fc5c65','#2bcbba','#fed330','#e8649a','#0ea5e9'];
 
-    let cats=JSON.parse(localStorage.getItem('jp_cats')||'null')||DEFAULT_CATS;
-    let entries=JSON.parse(localStorage.getItem('jp_entries')||'[]');
-    let budget=parseFloat(localStorage.getItem('jp_budget')||'0');
-    let settings=JSON.parse(localStorage.getItem('jp_settings')||'{}');
+    let cats=JSON.parse(localStorage.getItem('kr_cats')||'null')||DEFAULT_CATS;
+    let entries=JSON.parse(localStorage.getItem('kr_entries')||'[]');
+    let budget=parseFloat(localStorage.getItem('kr_budget')||'0');
+    let settings=JSON.parse(localStorage.getItem('kr_settings')||'{}');
     let selectedCat='food',pendingAction=null,selectedEmoji=EMOJI_LIST[0];
     let currentStatTab='cat',currentSort='date';
 
@@ -720,9 +758,9 @@
 
     const gs=k=>(settings[k]!==undefined?settings[k]:SET_DEF[k]);
     const sym=()=>CURR_SYMS[gs('currency')]||'€';
-    const saveCats=()=>localStorage.setItem('jp_cats',JSON.stringify(cats));
-    const saveEntries=()=>localStorage.setItem('jp_entries',JSON.stringify(entries));
-    const saveSettings=()=>localStorage.setItem('jp_settings',JSON.stringify(settings));
+    const saveCats=()=>localStorage.setItem('kr_cats',JSON.stringify(cats));
+    const saveEntries=()=>localStorage.setItem('kr_entries',JSON.stringify(entries));
+    const saveSettings=()=>localStorage.setItem('kr_settings',JSON.stringify(settings));
     const fmt=n=>n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
     const totalSpent=()=>entries.reduce((s,e)=>s+e.amount,0);
 
@@ -745,7 +783,7 @@
       document.getElementById('currSym').textContent=s;
       document.querySelectorAll('.curr-sym-label').forEach(el=>el.textContent=s);
       const name=gs('tripName');
-      document.getElementById('headerTitle').innerHTML=(name||'Japan')+' <span>Tracker</span>';
+      document.getElementById('headerTitle').innerHTML=(name||'Korea')+' <span>Tracker</span>';
       const locRow=document.getElementById('locationFieldRow');
       if(locRow)locRow.style.display=gs('showLocation')?'':'none';
       document.body.classList.toggle('pink',!!gs('pinkMode'));
@@ -893,7 +931,7 @@
     function askDeleteBudget(){
       closeBudgetModal();
       showConfirm('💰','Budget löschen?','Das gesetzte Budget wird entfernt.','Löschen',()=>{
-        budget=0;localStorage.removeItem('jp_budget');updateAll();showToast('Budget gelöscht');
+        budget=0;localStorage.removeItem('kr_budget');updateAll();showToast('Budget gelöscht');
       });
     }
     function askDeleteCat(id){
@@ -1037,7 +1075,7 @@
       try{
         const {jsPDF}=window.jspdf;
         const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-        const s=sym(),spent=totalSpent(),name=gs('tripName')||'Japan',W=210,margin=18;
+        const s=sym(),spent=totalSpent(),name=gs('tripName')||'Korea',W=210,margin=18;
         doc.setFillColor(26,20,16);doc.rect(0,0,W,30,'F');
         doc.setTextColor(255,255,255);doc.setFontSize(18);doc.setFont('helvetica','bold');
         doc.text(name+' Reise — Ausgaben',margin,14);
@@ -1089,7 +1127,7 @@
         doc.setFillColor(26,20,16);doc.rect(margin,y,W-margin*2,8,'F');
         doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
         doc.text('Gesamt',margin+2,y+5.5);doc.text(s+fmt(spent),W-margin-20,y+5.5);
-        const tripName=(gs('tripName')||'Japan').replace(/[^a-zA-Z0-9]/g,'_');
+        const tripName=(gs('tripName')||'Korea').replace(/[^a-zA-Z0-9]/g,'_');
         const filename=`${tripName}_Ausgaben_${new Date().toISOString().slice(0,10)}.pdf`;
         if(typeof AndroidBridge!=='undefined'){
           const base64=doc.output('datauristring').split(',')[1];
@@ -1108,13 +1146,17 @@
       document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
       document.getElementById('page-'+name).classList.add('active');
       document.querySelectorAll('.tab')[idx]?.classList.add('active');
-      if(name==='plan')renderPlan();
+      if(name==='plan'){renderPlan();renderPlaces();}
+    }
+    function toggleSection(id){
+      const el=document.getElementById('section-'+id);
+      if(el)el.classList.toggle('section-collapsed');
     }
     function openBudgetModal(){document.getElementById('budgetInput').value=budget||'';document.getElementById('budgetModal').classList.remove('hidden');}
     function closeBudgetModal(){document.getElementById('budgetModal').classList.add('hidden');}
     function saveBudget(){
       const v=parseFloat(document.getElementById('budgetInput').value);
-      if(v>0){budget=v;localStorage.setItem('jp_budget',v);updateAll();showToast('🎯 Budget: '+sym()+fmt(v));}
+      if(v>0){budget=v;localStorage.setItem('kr_budget',v);updateAll();showToast('🎯 Budget: '+sym()+fmt(v));}
       closeBudgetModal();
     }
     function showToast(msg){
@@ -1133,115 +1175,97 @@
 
     // ── PLAN DATA ─────────────────────────────────────────────
     const DEFAULT_PLAN=[
-    {day:1,date:'25.04.',city:'Tokio',transport:'Flug → Narita/Haneda · dann Suica/Pasmo kaufen & Zug zum Hotel',
+    {day:1,date:'22.10.',city:'Abflug',transport:'Nachtflug Richtung Seoul',
      sections:[
-      {label:'Ankommen',items:[{text:'Landen, Gepäck abholen, durch Zoll'},{text:'IC-Karte (Suica/Pasmo) am Flughafen kaufen',badge:'wichtig'},{text:'Hotel einchecken, Gepäck abstellen'},{text:'Erholen — kein volles Programm heute'}]},
-      {label:'Abends',items:[{text:'Spontan das Stadtviertel ums Hotel erkunden'},{text:'Konbini-Erlebnis: 7-Eleven oder FamilyMart — erste Onigiri & Bento'},{text:'Garten vom Hotel besuchen falls vorhanden'}]},
-     ],tip:'Kein volles Programm am Anreisetag — Jetlag einplanen! Suica/Pasmo am Flughafen holen, spart viel Zeit.'},
-    {day:2,date:'26.04.',city:'Tokio · Harajuku & Shibuya',transport:'U-Bahn (Suica)',
+      {label:'Abends',items:[{text:'Letzter Check: Pässe, Reservierungen, Kakao-/Naver-Apps installiert'},{text:'Griffbereit: e-Arrival-Card-Bestätigung',badge:'wichtig'},{text:'KTX-Tickets (Seoul→Busan 28.10., Busan→Seoul 2.11.)'},{text:'Zeitfenster für Leeum, Jongmyo, Changdeokgung'},{text:'Spa- und Friseurtermine bestätigen'},{text:'Nachtflug — schlafen so viel wie möglich'}]},
+     ],tip:'K-ETA brauchst du als Österreicherin NICHT. e-Arrival Card ist ausgefüllt.'},
+    {day:2,date:'23.10.',city:'Seoul · Myeongdong',transport:'ICN 08:35 → AREX bis Seoul Bahnhof (43/51 Min) → Taxi/U-Bahn nach Myeongdong (~1:15–1:30 h bis Hotel)',
      sections:[
-      {label:'Morgens (Harajuku)',items:[{text:'Meiji Schrein — früh hin, ruhige Atmosphäre'},{text:'Yoyogi-Park — entspannen, Picknick'},{text:'Takeshita Street — Crepes & verrückte Mode'}]},
-      {label:'Mittags / Nachmittags (Shibuya)',items:[{text:'Shibuya Crossing — Muss! Auch von oben fotografieren'},{text:'3D Billboard an der Ecke Shibuya Scramble'},{text:'Hachiko Statue — kurzer Stopp'},{text:'Shibuya Sky Aussichtsplattform — Tickets vorbuchen!',badge:'ticket'}]},
-      {label:'Abends',items:[{text:'Roboter Café — unbedingt vorbuchen!',badge:'ticket'},{text:'Turmbar — Drinks mit Aussicht'},{text:'Round 1 Stadium in Shibuya — riesiges Spielcenter'}]},
-     ],tip:'Roboter Café: Tickets Wochen im Voraus! Shibuya Sky bei Sonnenuntergang buchen — sonst ausverkauft.'},
-    {day:3,date:'27.04.',city:'Tokio · Shinjuku',transport:'U-Bahn (Suica)',
+      {label:'Am Flughafen',items:[{text:'Landen, Immigration & Gepäck (~45–60 Min)'},{text:'Tourist Information Center in der Ankunftshalle: Heritage Passport holen, Stadtpläne, T-Money-Karten',badge:'wichtig',url:'Incheon Airport Tourist Information'}]},
+      {label:'Mittag · Hotel',items:[{text:'Transfer AREX → Seoul Station → Myeongdong'},{text:'Gepäck an Rezeption Nine Tree Myeondong 2, Check-in ab 15 Uhr',url:'Nine Tree Premier Hotel Myeongdong 2'}]},
+      {label:'Nachmittag · ruhig',items:[{text:'Myeongdong Cathedral',url:'Myeongdong Cathedral'},{text:'Streetfood & Gassen durchstreifen'},{text:'Isaac Toast — Frühstück für die nächsten Tage einplanen',url:'Isaac Toast Myeongdong'}]},
+      {label:'Abends · Myeongdong Shops zu Fuß',items:[{text:'Olive Young Flagship Myeongdong — Freebie-Pack mitnehmen!',badge:'wichtig',url:'Olive Young Flagship Myeongdong'},{text:'M Playground (Migliore B1, 115 Toegye-ro) — bis 23:30',url:'Migliore Myeongdong'},{text:'Line Friends Square Myeongdong — BT21 & BTS',url:'Line Friends Square Myeongdong'},{text:'Mixsoon Flagship mit Hautanalyse',url:'Mixsoon Flagship Myeongdong'},{text:'New Balance Myeongdong — Custom-Shirts & Schuhe',url:'New Balance Myeongdong'}]},
+     ],tip:'Jetlag einplanen — Myeongdong-Shops haben lang offen, keine Anfahrt nötig.'},
+    {day:3,date:'24.10.',city:'Seoul · Gyeongbokgung & Insadong',transport:'U-Bahn Linie 3 → Gyeongbokgung Station',
      sections:[
-      {label:'Tagsüber',items:[{text:'Omoide Yokocho (Memory Lane) — enge Gassen, Yakitori'},{text:'Kabukicho Entertainment District — tagsüber erkunden'},{text:'Samurai & Ninja Museum Tokio — interaktive Tour',badge:'ticket'},{text:'Spontanes Mittagessen in Shinjuku'}]},
-      {label:'Abends',items:[{text:'Kabukicho abends — nochmal durch die Neonlichter'},{text:'Ginza Viertel — Abendspaziergang & Luxusmeile'}]},
-     ],tip:'Samurai Museum: Tickets online vorbuchen. Kabukicho: Vorsicht bei aufdringlichen Werbern.'},
-    {day:4,date:'28.04.',city:'Tokio · Asakusa & Akihabara',transport:'U-Bahn: Asakusa-Linie → Asakusa, dann Hibiya-Linie → Akihabara',
+      {label:'Vormittag',items:[{text:'Gyeongbokgung Palace mit Wachablösungszeremonie',badge:'wichtig',url:'Gyeongbokgung Palace'},{text:'Heritage-Stempel 1/3 holen'}]},
+      {label:'Mittag',items:[{text:'Streetfood & Teehäuser in Insadong',url:'Insadong'}]},
+      {label:'Nachmittag',items:[{text:'Bukchon Hanok Village — Herbstlaub in Topfarbe',url:'Bukchon Hanok Village'}]},
+      {label:'Abend · Moonlight Lotus Show',items:[{text:'Mulbit Yeonhwa am Chundang-Teich (Changgyeonggung)',badge:'ticket',url:'Changgyeonggung Palace'},{text:'Vorstellungen 19:00 / 19:30 / 20:00 — je 16 Min, 1.000 KRW inkl. Eintritt'},{text:'Tickets NUR vorab über Ticketlink — kein Verkauf vor Ort!',badge:'wichtig'}]},
+     ],tip:'Mulbit Yeonhwa läuft 2026 nur bis 1. Nov, Mi–So — in Seoul-Tagen bleiben 23., 24. oder 25.10. Falls nichts frei: Punkt fällt weg.'},
+    {day:4,date:'25.10.',city:'Seoul · Hongdae & N Seoul Tower',transport:'U-Bahn Linie 2 → Hongik University',
      sections:[
-      {label:'Morgens (Asakusa)',items:[{text:'Senso-ji Tempel — früh hin (vor 9 Uhr = kaum Touristen!)'},{text:'Nakamise Street — in den Seitengassen kaufen, dort billiger!'},{text:'Asakusa Shrine (Asakusa-jinja) — direkt daneben'},{text:'Kimono-Erlebnis in Asakusa'}]},
-      {label:'Nachmittags (Akihabara)',items:[{text:'Tamashii Nations Store — offizielle Figuren & Merchandise'},{text:'Spielhallen erkunden — mehrere Stockwerke Arcade'},{text:'Round 1 Stadium Akihabara'}]},
-      {label:'Abends',items:[{text:'Tokyo Skytree (Sumida) — bei Dämmerung'}]},
-     ],tip:'Skytree: Tickets vor Ort oder online. Seitengassen neben Nakamise: Snacks zu halben Preisen.'},
-    {day:5,date:'29.04.',city:'Nikko (Tagesausflug)',transport:'Zug: Asakusa → Nikko (Tobu-Linie, ca. 2h) · JR Pass oder Nikko Pass',
+      {label:'Vormittag · Hongdae & Yeonnam',items:[{text:'Brunch & Cafés in Yeonnam-dong',url:'Yeonnam-dong'},{text:'Am Wochenende: Straßenmusik in Hongdae',url:'Hongdae'}]},
+      {label:'Shops · zu Fuß erreichbar',items:[{text:"943 King's Cross — Harry-Potter-Café",url:"943 King's Cross Hongdae"},{text:'Caplab (Yeonnam-dong 241-47, Souterrain) — Cap gestalten, 12–20 Uhr, Mo zu',url:'Caplab Yeonnam'},{text:'Plüsch-Shop (Mapo-gu, Seogyo-dong 326-26, Einheit 201)',url:'Seogyo-dong 326-26'},{text:'Acorn Caricature — zeichnen lassen',url:'Acorn Caricature Hongdae'},{text:'Gentle Monster Hongdae Flagship',url:'Gentle Monster Hongdae'},{text:'Red Button — Brett-/Kartenspielcafé für den Abend',url:'Red Button Hongdae'}]},
+      {label:'Spätnachmittag',items:[{text:'Namsan-Seilbahn hoch zum N Seoul Tower',url:'N Seoul Tower'},{text:'Oben zum Sonnenuntergang aufs Observatorium'},{text:'Berühmtes Klo mit Aussicht nicht vergessen'}]},
+      {label:'Abend',items:[{text:'Zurück nach Myeongdong zum Essen'}]},
+     ],tip:'Dieser Tag ist durch gestrichene DMZ-Tour frei. Hongdae am Sonntag perfekt — kleine Läden sind offen.'},
+    {day:5,date:'26.10.',city:'Seoul · Jongno & Seongsu',transport:'U-Bahn Linie 1/3 → Jongno, dann Linie 2 → Seongsu (~20 Min)',
      sections:[
-      {label:'Früh los (6–7 Uhr)',items:[{text:'Tosho-gu Schrein — UNESCO Welterbe, überwältigend verziert'},{text:'Futarasan Schrein & Taiyuin-Mausoleum'},{text:'Kegon-Wasserfall — 97m hoch, kurzer Umweg'}]},
-     ],tip:'JR Pass oder Nikko Pass nutzen. Früh genug zurück — nicht im Berufsverkehr stecken.'},
-    {day:6,date:'30.04.',city:'Tokio · Odaiba',transport:'Yurikamome-Bahn oder Rinkai-Linie · ab Shimbashi',
+      {label:'Vormittag',items:[{text:'Jongmyo-Schrein — nur mit gebuchter Zeittour an Wochentagen!',badge:'ticket',url:'Jongmyo Shrine'},{text:'Heritage-Stempel 2/3'}]},
+      {label:'Mittag',items:[{text:'Changdeokgung mit Huwon/Geheimem Garten — eigenes Zeitfenster',badge:'ticket',url:'Changdeokgung Palace'},{text:'Heritage-Stempel 3/3 — alle Seoul-Stempel komplett!'}]},
+      {label:'Zwischenstopp',items:[{text:'Riot Store im LoL Park — Jongno Tower bei Jonggak',url:'LoL Park Jongno'},{text:'Optional: Ikseon-dong Hanok-Gassen mit Cafés',url:'Ikseon-dong'}]},
+      {label:'Nachmittag · Seongsu',items:[{text:'Miffy Store Seoul — der große Miffy-Laden',url:'Miffy Store Seoul Seongsu'},{text:'Bomulseom / Treasure Island — japanisches Geschirr',url:'Bomulseom Seongsu'},{text:'Kodak Corner Shop — Vintage-Kameras & Kleidung',url:'Kodak Corner Shop Seongsu'}]},
+      {label:'Abend · Myeongdong-Termine (optional)',items:[{text:'Park Jun Beauty Lab — Friseur / Head Spa',badge:'ticket',url:'Park Jun Beauty Lab Myeongdong'},{text:'Val:U Clinic oder Pria Clinic',badge:'ticket'}]},
+     ],tip:'Seongsu-Läden schließen 19–20 Uhr. Lieber Jongmyo & Changdeokgung straff halten und früh nach Seongsu. Zur Not Yongsan-Block (Di) tauschen.'},
+    {day:6,date:'27.10.',city:'Seoul · Yongsan, Itaewon & Banpo',transport:'U-Bahn Linie 4 → Ichon / Linie 6 → Itaewon · Paläste Di geschlossen',
      sections:[
-      {label:'Tagsüber',items:[{text:'Rainbow Bridge überqueren / ansehen'},{text:'Freiheitsstatue Tokio — kurzer Fotostopp'},{text:'Odaiba Beach — entspannen mit Blick auf die Skyline'},{text:'Gundam Statue (1:1 Full Scale)'},{text:'Azabudai Hills — neues Megaprojekt 2023'}]},
-      {label:'Nachmittags / Abends',items:[{text:'TeamLab Planets — Tickets WOCHEN im Voraus buchen!',badge:'ticket'}]},
-     ],tip:'TeamLab Planets: Früh oder spät buchen = weniger Gedränge. Socken ausziehen — man läuft durch Wasser.'},
-    {day:7,date:'01.05.',city:'Hakone',transport:'Odakyu Romance Car: Shinjuku → Hakone-Yumoto (ca. 85 Min.) · Hakone Free Pass kaufen',
+      {label:'Vormittag',items:[{text:'National Museum of Korea — inkl. legendärem Museumsshop',url:'National Museum of Korea'}]},
+      {label:'Mittag · Yongsan I’Park Mall',items:[{text:'Nintendo Store (im I’Park Mall beim Bahnhof Yongsan)',url:'Nintendo Store Yongsan'},{text:'Marvel-Etagen & Spielzeug-Stockwerke',url:"Yongsan I'Park Mall"}]},
+      {label:'Nachmittag · Hannam-dong & Itaewon',items:[{text:'Leeum Museum of Art (Mo zu) — Zeitfenster!',badge:'ticket',url:'Leeum Museum of Art'},{text:'Itaewon durchstreifen',url:'Itaewon'}]},
+      {label:'Abend',items:[{text:'Banpo-Brücke Regenbogen-Mondlichtbrunnen',badge:'wichtig',url:'Banpo Bridge Moonlight Rainbow Fountain'},{text:'Letzte Chance — Saison endet 31.10.! Mehrere Shows, je ~20 Min'}]},
+     ],tip:'Alle Stopps liegen in Yongsan-gu — kurze Wege. Banpo ist von Itaewon aus schnell erreichbar.'},
+    {day:7,date:'28.10.',city:'Seoul → Busan',transport:'KTX Seoul → Busan (~2:15 h) · dann Nampo-dong zu Fuß · Taxi nach Gwangalli',
      sections:[
-      {label:'Anreise & Aktivieren',items:[{text:'Hakone Free Pass aktivieren'}]},
-      {label:'Tagsüber',items:[{text:'Fuji-Blick (Owakudani / Ashi-See) — wetterabhängig!'},{text:'Seilbahn Komagatake / Owakudani'},{text:'Vulkanlandschaft Owakudani — schwarze Eier essen!'},{text:'Ashi-See Bootsfahrt mit Fuji-Panorama'}]},
-      {label:'Abends',items:[{text:'Onsen im Ryokan — traditionell übernachten',badge:'flexibel'}]},
-     ],tip:'Hakone Free Pass buchen (deckt alle Verkehrsmittel). Fuji-Sicht ist wetterabhängig — Morgen hat beste Chancen!'},
-    {day:8,date:'02.05.',city:'Hakone → Tokio',transport:'Odakyu-Linie zurück nach Tokio (mit Hakone Free Pass)',
+      {label:'Vormittag',items:[{text:'Check-out Nine Tree Myeongdong'},{text:'KTX Seoul/Yongsan → Busan'}]},
+      {label:'Nachmittag · Nampo-dong',items:[{text:'Jagalchi-Fischmarkt',url:'Jagalchi Fish Market Busan'},{text:'BIFF Square',url:'BIFF Square Busan'},{text:'Yongdusan Park + Busan Tower (Rolltreppe von Nampo-dong)',url:'Busan Tower Yongdusan'}]},
+      {label:'Abend',items:[{text:"Taxi nach Gwangalli, Check-in B'AMU Hotel & Spa",url:"B'AMU Hotel Gwangalli"},{text:'Erster Strandspaziergang mit Blick auf beleuchtete Gwangan-Brücke (XO Kitty!)',url:'Gwangalli Beach'}]},
+     ],tip:"B'AMU liegt direkt am Gwangalli Beach — Brücke aus XO Kitty vor der Tür."},
+    {day:8,date:'29.10.',city:'Busan · Gimhae Gaya-Route',transport:'Busan-Gimhae Light Rail Transit (Tagesausflug)',
      sections:[
-      {label:'Morgens (Optional)',items:[{text:'Onsen ausgiebig genießen — Ryokan-Frühstück nicht verpassen'},{text:'Hakone Open Air Museum — Skulpturen & Picasso-Werke',badge:'flexibel'}]},
-      {label:'Rückreise',items:[{text:'Puffertag: Rückkehr nach Tokio & entspannen'}]},
-     ],tip:'Puffertag — ideal für Nachholung oder reine Entspannung.'},
-    {day:9,date:'03.05.',city:'Yokohama (Tagesausflug)',transport:'JR Tōkaidō-Linie: Tokio → Yokohama (ca. 30 Min., mit Suica)',
-     sections:[
-      {label:'Tagsüber',items:[{text:'Chinatown Yokohama — größte Japans, Dim Sum & Bao'},{text:'Cosmo World Vergnügungspark — Riesenrad am Wasser'},{text:'Cup Noodles Museum — eigene Nudelsuppe kreieren (Pflicht!)'},{text:'Yamashita Park & Hafenpromenade — entspannt schlendern'}]},
+      {label:'Ganztägig',items:[{text:'National Gaya Museum',url:'National Gaya Museum Gimhae'},{text:'Königsgräber Gimhae',url:'Daeseong-dong Tumuli Gimhae'},{text:'Daeseong-dong Tumuli-Museum'},{text:'3 Heritage-Stempel sammeln',badge:'wichtig'}]},
+      {label:'Abend',items:[{text:'Zurück nach Gwangalli'},{text:'Dinner mit Meerblick',url:'Gwangalli Beach'}]},
      ]},
-    {day:10,date:'04.05.',city:'Fuji-Gegend',transport:'Zug: Tokio → Fujikawaguchiko (ca. 2h, Fujikyuko-Linie) · nur bei klarem Himmel!',
+    {day:9,date:'30.10.',city:'Busan · Beauty-Tag',transport:'In Busan, Taxi zu Studios',
      sections:[
-      {label:'Nur bei klarem Himmel!',items:[{text:'Arakurayama Sengen Park — Chureito-Pagode mit Fuji-Blick'},{text:'Lawson am Fuji — berühmtestes Convenience-Store-Foto der Welt'},{text:'Kogamasao Memorial Park — weiterer Fuji-Aussichtspunkt'},{text:'Fuji Bridge (Wanizuka-Brücke) — Fuji spiegelt sich im See'},{text:'Hozugawa River Bootsfahrt',badge:'flexibel'}]},
-     ],tip:'Wetter am Vortag prüfen! Früh (7–9 Uhr) ist die Sicht am besten. Chureito-Pagode: Treppen bergauf, lohnt sich!'},
-    {day:11,date:'05.05.',city:'Tokio · Puffer & Optional',transport:'Ashikaga Flower Park: Tokio → Tomita (ca. 2h, Ryomo-Linie) · sonst U-Bahn',
+      {label:'Vormittag',items:[{text:'Gesichtsbehandlung',badge:'ticket'},{text:'Lash Lift',badge:'ticket'}]},
+      {label:'Nachmittag',items:[{text:'Fußpflege',badge:'ticket'},{text:'Personal Color Analysis — falls Slot frei',badge:'flexibel'}]},
+     ],tip:'ALLE Studios müssen tattoo-freundlich sein — bei Bestätigung direkt nachfragen! Spaland Centum City GESTRICHEN (keine Tattoos erlaubt).'},
+    {day:10,date:'31.10.',city:'Busan · Gamcheon & Songdo',transport:'Taxi/Bus · Drone Show direkt vor dem Hotel',
      sections:[
-      {label:'Optionen',items:[{text:'Ashikaga Flower Park — blühende Wisteria-Tunnel, April/Mai Hauptsaison!'},{text:'Messer selber machen — Workshop in Tokio buchbar'},{text:'Ring selber machen — Silberschmiede-Workshop'},{text:'Sumo Show — wenn Turnier stattfindet (Ryogoku Kokugikan)'},{text:'Einkaufen: Ginza, Harajuku, Akihabara nochmals'}]},
-     ],tip:'Ashikaga Flower Park: Ende April/Anfang Mai ist PEAK-Saison. Früh buchen!'},
-    {day:12,date:'06.05.',city:'Kyoto',transport:'Shinkansen: Tokio → Kyoto (ca. 2h 15 Min., Tokaido-Shinkansen)',
+      {label:'Früh morgens',items:[{text:'Gamcheon Culture Village — vor den Reisegruppen',badge:'wichtig',url:'Gamcheon Culture Village'}]},
+      {label:'Mittag',items:[{text:'Songdo Marine Cable Car — Seilbahn über die Bucht (XO-Kitty-Drehort!)',url:'Songdo Marine Cable Car'},{text:'Crystal-Kabine mit Glasboden (Aufpreis)',badge:'flexibel'},{text:'Amnam Park',url:'Amnam Park Busan'}]},
+      {label:'Optional',items:[{text:'Taejongdae Park (Yeongdo) — braucht ~3 h, nur ohne Amnam Park',badge:'flexibel',url:'Taejongdae Park'}]},
+      {label:'Abend · Halloween',items:[{text:'Drohnenshow am Gwangan-Strand, 19:00 & 21:00',badge:'wichtig',url:'Gwangalli Beach'},{text:'Status prüfen bei Wind/Regen: gwangallimdrone.co.kr'}]},
+     ],tip:'Halloween-Abend = Promenade & Bars doppelt voll. Ausfall zeigt sich erst kurzfristig.'},
+    {day:11,date:'01.11.',city:'Busan · Sky Capsule & Haeundae',transport:'Metro → Mipo (Haeundae Blueline Park)',
      sections:[
-      {label:'Morgens',items:[{text:"Philosopher's Path (2km) — morgens kaum Touristen"},{text:'Ginkaku-ji (Silberner Tempel)'},{text:'Adashino Nenbutsu-ji — abgelegener Tempel im Sagano-Wald'}]},
-      {label:'Nachmittags',items:[{text:'Kiyomizu-dera — für Sonnenuntergang einplanen (Tickets bis 17 Uhr)'},{text:'Yasaka Pagode Fotospot — auf dem Weg durch Gion'}]},
-      {label:'Abends',items:[{text:'Gion Viertel — Geisha-Viertel, Abend beste Zeit für Sichtungen'},{text:'KICHIKICHI — legendäres Omakette Omurice Restaurant',badge:'wichtig'},{text:'New TeamLab Biovortex Kyoto'}]},
-     ],tip:'KICHIKICHI: Reservierung Wochen/Monate vorher! Gion abends: Geishas respektvoll behandeln.'},
-    {day:13,date:'07.05.',city:'Kyoto · Arashiyama',transport:'Randen-Bahn oder Bus nach Arashiyama (ca. 30 Min.)',
+      {label:'Vormittag',items:[{text:'Sky Capsule (Mipo → Cheongsapo) — Zeitfenster VORAB buchen!',badge:'ticket',url:'Haeundae Sky Capsule'},{text:'Beach Train auf der alten Bahnstrecke am Meer',url:'Haeundae Blueline Park Beach Train'}]},
+      {label:'Mittag',items:[{text:'Haeundae Beach',url:'Haeundae Beach'},{text:'Cheongsapo',url:'Cheongsapo'},{text:'Dalmaji-Hügel',url:'Dalmaji Hill'}]},
+      {label:'Nachmittag',items:[{text:'Suyeongman Yacht Marina (XO-Kitty-Drehort)',url:'Suyeongman Yacht Marina'}]},
+      {label:'Optional abends',items:[{text:'HillSpa Haeundae — tattoo-freundliches Jjimjilbang, 18 Quellen & 13 Themenbäder',badge:'flexibel',url:'HillSpa Haeundae'}]},
+      {label:'Event-Radar',items:[{text:'Busan Biennale letzter Tag — Venue aber ~1 h in Eulsukdo',badge:'flexibel'}]},
+     ],tip:'HillSpa ist der Spaland-Ersatz in Busan.'},
+    {day:12,date:'02.11.',city:'Busan → Incheon',transport:'KTX mit Tongdosa-Stopp → Seoul → AREX → Yeongjong-do (~5–6 h mit Gepäck)',
      sections:[
-      {label:'Früh morgens (vor 8 Uhr!)',items:[{text:'Arashiyama Bambuswald — VOR 8 Uhr = fast allein!'},{text:'Tenryu-ji Garten — UNESCO Weltkulturerbe'},{text:'Kimono Forest (Randen Station)'},{text:'Hozugawa River Bootsfahrt ab Kameoka',badge:'flexibel'}]},
-      {label:'Mittags',items:[{text:'Kinkaku-ji (Goldener Tempel) — Tickets direkt vor Ort'},{text:'Burg Nijo — vor 16 Uhr Einlass!'}]},
-      {label:'Nachmittags / Abends',items:[{text:'Teezeremonie im Kimono',badge:'ticket'},{text:'Kyoto Kimono Rental HANAEMI'},{text:'Gion Viertel nochmals (abends besonders schön)'},{text:'Fushimi Inari Schrein — bei Dämmerung für Toriis im Licht'}]},
-     ],tip:'Arashiyama: 6:30–7:30 Uhr fast allein. Fushimi Inari: ganzen Berg (2–3h) für Ruhe oben.'},
-    {day:14,date:'08.05.',city:'Kyoto · Museen & Kultur',transport:'Bus / U-Bahn innerhalb Kyoto',
+      {label:'Vormittag',items:[{text:"Check-out B'AMU"},{text:'KTX Richtung Norden'},{text:'Zwischenstopp Ulsan für Tongdosa — Heritage-Stempel',badge:'wichtig',url:'Tongdosa Temple'}]},
+      {label:'Abend',items:[{text:'Weiter mit KTX → Seoul Bahnhof'},{text:'AREX nach Incheon (43–51 Min)'},{text:'Check-in Hotel ORA Incheon (Yeongjong-do)',url:'Hotel ORA Incheon'}]},
+     ],tip:'Zu entscheiden: Tongdosa streichen für entspannteren Tag ODER Inlandsflug Gimhae–Incheon statt KTX.'},
+    {day:13,date:'03.11.',city:'Incheon · Yeongjong-do',transport:'Alles auf Yeongjong-do — keine weiten Fahrten',
      sections:[
-      {label:'Tagsüber',items:[{text:'Nintendo Museum — Tickets online (Lotteriesystem!)',badge:'ticket'},{text:'International Manga Museum',badge:'ticket'},{text:'KYOTO SAMURAI WALK — geführte Tour im Samurai-Kostüm'},{text:'Kaiserpalast Kyoto — kostenlose Führung',badge:'free'}]},
-     ],tip:'Nintendo Museum: per Lotterie — so früh wie möglich anmelden! Nur 1 Spiel-Token pro Person.'},
-    {day:15,date:'09.05.',city:'Kyoto → Osaka',transport:'Shinkansen oder Hankyu-Linie: Kyoto → Osaka (ca. 15–30 Min.)',
+      {label:'Vormittag',items:[{text:'Incheon Seaside Rail Bike (Gueup-ro 75, Jung-gu) — bei Tageslicht!',badge:'ticket',url:'Incheon Seaside Rail Bike'}]},
+      {label:'Nachmittag',items:[{text:'CIMER im Paradise City — tattoo-freundlich, 10–21 Uhr',badge:'wichtig',url:'CIMER Paradise City'},{text:'Aqua Spa ~50.000 KRW / 6 h · Jjimjil 30.000 KRW / 4 h'},{text:'Uhr mitnehmen — drinnen gibt es keine, Überzeit kostet extra'},{text:'5 % Rabatt über Naver-App'}]},
+      {label:'Abend',items:[{text:'Paradise City Wonderbox — Indoor-Freizeitpark, wetterunabhängig',badge:'ticket',url:'Paradise City Wonderbox'}]},
+      {label:'Optional',items:[{text:'Incheon Chinatown & Wolmido falls Energie übrig',badge:'flexibel',url:'Incheon Chinatown'}]},
+     ],tip:'Rail Bike, CIMER und Wonderbox liegen alle auf Yeongjong-do — perfekter letzter voller Tag ohne Fahrzeiten.'},
+    {day:14,date:'04.11.',city:'Incheon · Abreise',transport:'Hotel ~2 km vom Flughafen · Abfahrt ~7:30–7:45 Uhr',
      sections:[
-      {label:'Morgens (Kyoto)',items:[{text:'Gepäck im Hotel lassen oder Coin Locker am Bahnhof'},{text:'Giouji Tempel — moosbedeckt, versteckt, sehr ruhig'},{text:'Nishiki Market — Kyotos Küche, Snacks & Pickles'}]},
-      {label:'Nachmittags → Osaka',items:[{text:'Mit Zug nach Osaka'},{text:'Osaka Unterkunft einchecken — AB HEUTE BUCHEN!',badge:'wichtig'},{text:'Osaka Viertel erkunden, Namba'}]},
-     ],tip:'Osaka Unterkunft frühzeitig buchen — das ist WICHTIG!'},
-    {day:16,date:'10.05.',city:'Osaka · Dotonbori',transport:'Osaka Metro (Midosuji-Linie) · Tagesticket lohnt sich',
-     sections:[
-      {label:'Tagsüber',items:[{text:'Dotonbori — DAS Herz von Osaka, Kani-Doraku Krabbe, Glico-Mann Foto'},{text:'Namba erkunden — Shoppen, Essen, Atmosphäre'},{text:'Küchenutensilien Viertel (Doguya-suji)'},{text:'Donguri Kyowakoku (Ghibli Store)'},{text:'Love Shrine (Namba Yasaka Shrine) — riesiges Löwenmaul'}]},
-      {label:'Abends',items:[{text:'Shinsekai Viertel — Retro-Osaka, Kushikatsu essen!'},{text:'Sumiyoshi Taisha Schrein — abends stimmungsvoll'}]},
-     ]},
-    {day:17,date:'11.05.',city:'Osaka · Castle & Umeda',transport:'Osaka Metro intrastadt',
-     sections:[
-      {label:'Morgens',items:[{text:'Osaka Castle & Schlosspark — morgens wenige Touristen'},{text:'Katsuoji Tempel — Daruma-Puppen-Tempel auf dem Berg'}]},
-      {label:'Nachmittags',items:[{text:'Umeda Sky Building — Floating Garden Aussichtsplattform'}]},
-     ]},
-    {day:18,date:'12.05.',city:'Osaka · Universal Studios Japan',transport:'JR Sakurajima-Linie: Osaka → Universal City (ca. 15 Min.)',
-     sections:[
-      {label:'Ganztagesticket',items:[{text:'Universal Studios Japan — Tickets & Express Pass vorbuchen!',badge:'ticket'},{text:'Harry Potter World — Highlight!'},{text:'Super Nintendo World — Highlight!'}]},
-     ],tip:'Express Pass lohnt sich an Wochenenden/Feiertagen. Nintendo World: Mario Kart-Reservierung in der App am Morgen sichern!'},
-    {day:19,date:'13.05.',city:'Hiroshima & Miyajima',transport:'Shinkansen: Osaka → Hiroshima (ca. 50 Min.) · Fähre: Hiroshima → Miyajima (ca. 10 Min.)',
-     sections:[
-      {label:'Früh los (7 Uhr)',items:[{text:'Friedenspark & Atommodenkuppel (Genbaku Dome) — sehr bewegend'},{text:'Friedensmuseum — mindestens 2 Stunden einplanen!'},{text:'Hiroshima Okonomiyaki essen — andere Art als Osaka!'},{text:'Mit Fähre nach Miyajima — schwimmende Torii von Itsukushima'}]},
-     ],tip:'Friedensmuseum: sehr emotional, Zeit einplanen. Miyajima nur wenn ausreichend Zeit bleibt.'},
-    {day:20,date:'14.05.',city:'Osaka → Tokio',transport:'Shinkansen: Osaka → Tokio (ca. 2h 30 Min.) · Fuji-Blick: rechte Seite!',
-     sections:[
-      {label:'Morgens',items:[{text:'Frühstück in Osaka — Takoyaki oder Tamago Sando'},{text:'Falls noch nicht: Küchenutensilien oder Ghibli Store',badge:'flexibel'}]},
-      {label:'Nachmittags (Tokio)',items:[{text:'Shinkansen nach Tokio — Fuji rechte Seite im Zug!'},{text:'Sumo Show / Turnier in Ryogoku — Mai ist Turniermonat!',badge:'flexibel'},{text:'Messer selber machen — Workshop (Kappabashi)'},{text:'Ring selber machen — Silberschmied-Workshop'}]},
-     ]},
-    {day:21,date:'15.05.',city:'Tokio · Großes Finale',transport:'U-Bahn innerhalb Tokio (Suica)',
-     sections:[
-      {label:'Optionen',items:[{text:'Messer selber machen — Workshop'},{text:'Ring selber machen — Silberschmiede'},{text:'Großes Einkaufen: Ginza, Harajuku, Akihabara, Shibuya'},{text:'Tokio nochmals genießen'}]},
-     ],tip:'Don Quijote (Donki) ist günstigstes Souvenir-Kaufhaus. Duty-Free am Flughafen für Whisky & Sake lohnt sich!'},
-    {day:22,date:'16./17.05.',city:'Tokio · Abreisetag',transport:'Narita Express oder Limousine Bus: Tokio → Narita/Haneda (ca. 60–90 Min.)',
-     sections:[
-      {label:'Abreise',items:[{text:'Letztes Frühstück in Tokio genießen'},{text:'Koffer packen & Hotel auschecken'},{text:'Rückflug 17.05. — Check-in 3h vorher am Flughafen!',badge:'wichtig'}]},
-     ],tip:'Duty-Free am Flughafen für Whisky & Sake lohnt sich! Don Quijote ist das günstigste Souvenir-Kaufhaus.'},
+      {label:'Morgens',items:[{text:'Koffer packen & Hotel ORA auschecken'},{text:'Transfer zum Flughafen'}]},
+      {label:'Abflug',items:[{text:'Rückflug 10:40 ab Incheon',badge:'wichtig'},{text:'Duty-Free für Soju, koreanische Kosmetik etc.'}]},
+     ],tip:'Nur ca. 2 km zum Flughafen — entspannter Morgen möglich.'},
     ];
 
-    let planData=JSON.parse(localStorage.getItem('jp_plan')||'null');
+    let planData=JSON.parse(localStorage.getItem('kr_plan')||'null');
     if(!planData){
       planData=DEFAULT_PLAN.map(d=>({
         ...d,transport:d.transport||'',tip:d.tip||'',
@@ -1260,7 +1284,7 @@
             planData=remoteData.map(d=>({...d,transport:d.transport||'',tip:d.tip||'',
               sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it}))}))
             }));
-            localStorage.setItem('jp_plan',JSON.stringify(planData));
+            localStorage.setItem('kr_plan',JSON.stringify(planData));
             renderPlan();
             setSyncState('online');
             showToast('✓ Plan aktualisiert');
@@ -1277,7 +1301,7 @@
 
     // ── SAVE PLAN (local + Firebase) ──────────────────────────
     async function savePlan() {
-      localStorage.setItem('jp_plan', JSON.stringify(planData));
+      localStorage.setItem('kr_plan', JSON.stringify(planData));
       if(window._firebaseSyncEnabled && window._fbSavePlan) {
         setSyncState('syncing');
         _ignoreNextFbUpdate = true;
@@ -1302,7 +1326,7 @@
             ...d, transport:d.transport||'', tip:d.tip||'',
             sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it,checked:it.checked||localChecked[it.text]||false}))}))
           }));
-          localStorage.setItem('jp_plan', JSON.stringify(planData));
+          localStorage.setItem('kr_plan', JSON.stringify(planData));
           renderPlan();
         } else {
           window._fbSavePlan(planData);
@@ -1319,7 +1343,7 @@
           ...d, transport:d.transport||'', tip:d.tip||'',
           sections:(d.sections||[]).map(s=>({label:s.label,items:(s.items||[]).map(it=>({...it,checked:it.checked||localChecked[it.text]||false}))}))
         }));
-        localStorage.setItem('jp_plan', JSON.stringify(planData));
+        localStorage.setItem('kr_plan', JSON.stringify(planData));
         if(document.getElementById('page-plan').classList.contains('active')) renderPlan();
         setSyncState('online');
         showToast('🔄 Plan aktualisiert');
@@ -1393,6 +1417,30 @@
       }
     }
 
+    // Alle einzigartigen Orte/Städte aus dem Plan — mit Kakao-Map-Link
+    function renderPlaces(){
+      const el=document.getElementById('placesList');
+      if(!el)return;
+      const seen={},cities=[];
+      planData.forEach((d,i)=>{
+        // Haupt-Stadt extrahieren (vor · → /)
+        const city=d.city.split('·')[0].trim().split('→')[0].trim().split('/')[0].trim();
+        if(!seen[city]){
+          seen[city]=true;
+          cities.push({city,date:d.date,day:d.day,color:DAY_PALETTE[i%DAY_PALETTE.length]});
+        }
+      });
+      el.innerHTML=`<div class="places-section-title">📍 Alle Orte</div>`+
+        cities.map(c=>`<div class="place-item">
+          <div class="place-day-dot" style="background:${c.color}"></div>
+          <div class="place-info">
+            <div class="place-city-name">${c.city}</div>
+            <div class="place-date">Tag ${c.day} · ${c.date}</div>
+          </div>
+          <button class="place-maps" onclick="openPlace('${c.city.replace(/'/g,'%27')}')" title="In Kakao Map öffnen">🗺️</button>
+        </div>`).join('');
+    }
+
     function badgeHTML(badge){
       if(!badge)return'';
       const map={ticket:'badge-ticket',free:'badge-free',wichtig:'badge-wichtig',neu:'badge-new',flexibel:'badge-flex'};
@@ -1412,7 +1460,7 @@
         const lc=sec.label.toLowerCase();
         const timeIcon=lc.includes('morgen')||lc.includes('früh')?'🌅':lc.includes('mittag')?'☀️':lc.includes('abend')?'🌙':lc.includes('anreise')||lc.includes('rückreise')||lc.includes('abreise')?'🚄':lc.includes('ankommen')?'✈️':'📍';
         const itemsHTML=sec.items.map((it,ii)=>{
-          const mapsBtn=it.url?`<button class="plan-maps-btn" onclick="event.stopPropagation();openExternalUrl('${it.url.replace(/'/g,'%27')}')" title="In Google Maps öffnen">🗺️</button>`:'';
+          const mapsBtn=it.url?`<button class="plan-maps-btn" onclick="event.stopPropagation();openExternalUrl('${it.url.replace(/'/g,'%27')}')" title="In Kakao Map öffnen">🗺️</button>`:'';
           return `<div class="plan-item${it.checked?' plan-item-done':''}" id="pitem-${idx}-${si}-${ii}" onclick="togglePlanItem(${idx},${si},${ii},event)">
             <span class="plan-checkbox">${it.checked?'☑':'☐'}</span>
             <span class="plan-item-text">${it.text}</span>
@@ -1442,19 +1490,33 @@
       </div>`;
     }
 
+    function kakaoMapUrl(query) {
+      // Mobile-friendly Kakao Map search link
+      return 'https://map.kakao.com/?q=' + encodeURIComponent(query);
+    }
     function openExternalUrl(url) {
       let safeUrl = url;
-      if(!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://')) safeUrl = 'https://' + safeUrl;
       if(safeUrl.includes('#Intent;')) safeUrl = safeUrl.split('#Intent;')[0];
-      const coordMatch = safeUrl.match(/@(-?[\d.]+),(-?[\d.]+)/);
+      // Google Maps-URL erkannt → in Kakao Map Suche umwandeln
       const placeMatch = safeUrl.match(/maps\/place\/([^/@]+)/);
+      const coordMatch = safeUrl.match(/@(-?[\d.]+),(-?[\d.]+)/);
+      const qMatch = safeUrl.match(/[?&]q=([^&]+)/);
       if(placeMatch) {
         const placeName = decodeURIComponent(placeMatch[1].replace(/\+/g,' '));
-        safeUrl = 'https://maps.google.com/?q=' + encodeURIComponent(placeName) + (coordMatch ? '&ll='+coordMatch[1]+','+coordMatch[2] : '');
+        safeUrl = kakaoMapUrl(placeName);
+      } else if(qMatch) {
+        const q = decodeURIComponent(qMatch[1].replace(/\+/g,' '));
+        safeUrl = kakaoMapUrl(q);
       } else if(coordMatch) {
-        safeUrl = 'https://maps.google.com/?q=' + coordMatch[1] + ',' + coordMatch[2];
+        safeUrl = 'https://map.kakao.com/?urlLevel=3&urlX=' + coordMatch[2] + '&urlY=' + coordMatch[1];
+      } else if(!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://')) {
+        // Plain text → als Suche in Kakao Map
+        safeUrl = kakaoMapUrl(safeUrl);
       }
       window.location.href = safeUrl;
+    }
+    function openPlace(query){
+      window.location.href = kakaoMapUrl(query);
     }
 
     function openPlanEdit(idx){
@@ -1532,6 +1594,7 @@
     applyAllSettings();
     updateAll();
     renderPlan();
+    renderPlaces();
 
     setTimeout(() => {
       initFirebaseSync();
