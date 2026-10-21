@@ -297,26 +297,15 @@
         .manage-add-btn { width:100%; margin-top:14px; padding:13px; background:var(--cream); border:1.5px dashed var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink-soft); cursor:pointer; font-weight:500; }
         .export-btn { display:flex; align-items:center; gap:8px; width:100%; margin-top:6px; padding:13px 16px; background:var(--cream); border:1.5px solid var(--border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); cursor:pointer; font-weight:500; text-align:left; }
         .export-btn:active { background:var(--accent-soft); border-color:var(--accent-border); }
-        /* Collapsible sections (Verlauf, Statistik unter Ausgaben) */
-        .section-collapsible { background:var(--card); border-radius:14px; border:1px solid var(--border); margin-bottom:12px; overflow:hidden; box-shadow:0 2px 8px rgba(26,20,16,0.05); }
-        .section-toggle-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:14px 16px; border:none; background:none; font-family:'DM Sans',sans-serif; cursor:pointer; color:var(--ink); gap:8px; }
-        .section-toggle-btn:active { background:var(--cream); }
-        .section-toggle-left { display:flex; align-items:center; gap:8px; min-width:0; }
-        .section-toggle-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-        .section-collapsed .section-body { display:none; }
-        .section-body { border-top:1px solid var(--border); padding:14px; }
-        .section-chevron { font-size:11px; color:var(--ink-soft); transition:transform 0.2s; display:inline-block; }
-        .section-collapsed .section-chevron { transform:rotate(-90deg); }
-
-        /* Carousel für Plan */
-        .plan-carousel { display:flex; overflow-x:auto; gap:12px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; padding:4px 16px 16px; scrollbar-width:none; }
-        .plan-carousel::-webkit-scrollbar { display:none; }
-        .plan-carousel > .plan-card { scroll-snap-align:start; flex-shrink:0; width:85vw; max-width:340px; margin-bottom:0; }
-        .plan-carousel > .plan-city-group { scroll-snap-align:start; flex-shrink:0; width:90vw; max-width:360px; margin-bottom:0; }
-        .plan-carousel > .plan-city-group .plan-card { width:100%; max-width:100%; }
+        /* Untertabs in Ausgaben */
+        .subtabs { position:sticky; top:0; z-index:10; display:flex; gap:6px; padding:10px 16px; background:var(--cream); border-bottom:1px solid var(--border); }
+        .subtab { flex:1; padding:9px 6px; border-radius:10px; border:1.5px solid var(--border); background:var(--card); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
+        .subtab.active { background:var(--accent-soft); border-color:var(--accent-border); color:var(--accent); font-weight:600; }
+        .subpage { display:none; }
+        .subpage.active { display:block; }
 
         /* Orteliste unter dem Plan */
-        .places-list { padding:4px 16px 30px; }
+        .places-list { padding:16px 14px 30px; }
         .places-section-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; margin:14px 0 10px; color:var(--ink); display:flex; align-items:center; gap:8px; }
         .place-item { display:flex; align-items:center; gap:12px; padding:11px 14px; background:var(--card); border-radius:12px; margin-bottom:8px; border:1px solid var(--border); box-shadow:0 2px 6px rgba(26,20,16,0.04); }
         .place-day-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
@@ -326,8 +315,33 @@
         .place-maps { background:none; border:none; font-size:15px; cursor:pointer; opacity:0.45; flex-shrink:0; padding:4px; }
         .place-maps:active { opacity:1; }
 
+        /* Plan-Content Wrapper (vertikale Liste wie vorher) */
+        .plan-content { padding:0 14px 30px; }
+
+        /* Tickets & Reservierungen Dropdown */
+        .ticket-section { margin-top:14px; background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 2px 8px rgba(26,20,16,0.05); }
+        .ticket-summary { padding:14px 16px; font-family:'DM Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:8px; list-style:none; color:var(--ink); }
+        .ticket-summary::-webkit-details-marker { display:none; }
+        .ticket-summary::after { content:'▼'; margin-left:auto; font-size:11px; color:var(--ink-soft); transition:transform 0.2s; }
+        .ticket-section[open] .ticket-summary::after { transform:rotate(180deg); }
+        .ticket-summary:active { background:var(--cream); }
+        .ticket-body { border-top:1px solid var(--border); padding:14px; }
+        .ticket-group { margin-bottom:16px; }
+        .ticket-group:last-child { margin-bottom:0; }
+        .ticket-group-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink-soft); margin-bottom:8px; }
+        .ticket-item { display:flex; gap:10px; padding:10px 11px; background:var(--cream); border-radius:10px; margin-bottom:6px; align-items:flex-start; border:1px solid var(--border); }
+        .ticket-item:last-child { margin-bottom:0; }
+        .ticket-type-pill { font-size:9.5px; font-weight:700; padding:3px 7px; border-radius:6px; flex-shrink:0; margin-top:1px; white-space:nowrap; letter-spacing:0.3px; }
+        .ticket-type-ticket { background:#fff3cd; color:#856404; }
+        .ticket-type-reservation { background:#d1ecf1; color:#0c5460; }
+        body.pink .ticket-type-ticket { background:#ffe3ec; color:#a24568; }
+        body.pink .ticket-type-reservation { background:#f3e3fb; color:#6b4578; }
+        .ticket-info { flex:1; min-width:0; }
+        .ticket-name { font-size:13px; font-weight:500; color:var(--ink); line-height:1.35; }
+        .ticket-sub { font-size:11px; color:var(--ink-soft); margin-top:2px; line-height:1.4; }
+
         /* PLAN */
-        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:14px 16px 0; }
+        .plan-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:14px 16px 10px; }
         .plan-title { font-family:'Noto Serif JP',serif; font-size:15px; font-weight:700; }
         .plan-sort-wrap { display:flex; gap:6px; align-items:center; }
         .plan-sort-chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:var(--card); font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--ink-soft); cursor:pointer; transition:all 0.15s; }
@@ -432,74 +446,68 @@
 </div>
 <div class="pages-wrapper">
     <div class="page active" id="page-ausgaben">
-        <div class="add-page-inner">
-            <div class="form-card">
-                <div class="form-title">✚ Ausgabe hinzufügen</div>
-                <div class="form-row">
-                    <label>Betrag (<span class="curr-sym-label">€</span>)</label>
-                    <input type="number" id="amountInput" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
-                </div>
-                <div class="form-row">
-                    <label>Beschreibung</label>
-                    <input type="text" id="descInput" placeholder="z.B. Bibimbap in Seoul">
-                </div>
-                <div class="form-row" id="locationFieldRow">
-                    <label>📍 Ort / Stadt</label>
-                    <div class="location-row">
-                        <input type="text" id="locationInput" placeholder="z.B. Seoul, Myeongdong…" autocomplete="off" oninput="onLocationInput(this.value)">
-                        <button class="gps-btn" id="gpsBtn" onclick="getGPSLocation()">📍</button>
+        <div class="subtabs">
+            <button class="subtab active" onclick="showSubTab('add')">➕ Hinzufügen</button>
+            <button class="subtab" onclick="showSubTab('history')">📋 Verlauf</button>
+            <button class="subtab" onclick="showSubTab('stats')">📊 Statistik</button>
+        </div>
+        <div class="subpage active" id="subpage-add">
+            <div class="add-page-inner">
+                <div class="form-card">
+                    <div class="form-title">✚ Ausgabe hinzufügen</div>
+                    <div class="form-row">
+                        <label>Betrag (<span class="curr-sym-label">€</span>)</label>
+                        <input type="number" id="amountInput" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
                     </div>
-                    <div class="location-suggestions" id="locationSuggestions"></div>
-                </div>
-                <div class="form-row">
-                    <div class="cat-label-row">
-                        <label style="margin-bottom:0">Kategorie</label>
-                        <button class="cat-manage-btn" onclick="openManageModal()">⚙️ Verwalten</button>
+                    <div class="form-row">
+                        <label>Beschreibung</label>
+                        <input type="text" id="descInput" placeholder="z.B. Bibimbap in Seoul">
                     </div>
-                    <div class="cat-grid" id="catGrid" style="margin-top:8px"></div>
+                    <div class="form-row" id="locationFieldRow">
+                        <label>📍 Ort / Stadt</label>
+                        <div class="location-row">
+                            <input type="text" id="locationInput" placeholder="z.B. Seoul, Myeongdong…" autocomplete="off" oninput="onLocationInput(this.value)">
+                            <button class="gps-btn" id="gpsBtn" onclick="getGPSLocation()">📍</button>
+                        </div>
+                        <div class="location-suggestions" id="locationSuggestions"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="cat-label-row">
+                            <label style="margin-bottom:0">Kategorie</label>
+                            <button class="cat-manage-btn" onclick="openManageModal()">⚙️ Verwalten</button>
+                        </div>
+                        <div class="cat-grid" id="catGrid" style="margin-top:8px"></div>
+                    </div>
+                    <button class="add-btn" onclick="addEntry()">+ Hinzufügen</button>
                 </div>
-                <button class="add-btn" onclick="addEntry()">+ Hinzufügen</button>
             </div>
-
-            <div class="section-collapsible" id="section-verlauf">
-                <button class="section-toggle-btn" onclick="toggleSection('verlauf')">
-                    <div class="section-toggle-left">
-                        <span class="history-title">📋 Verlauf</span>
-                    </div>
-                    <div class="section-toggle-right">
-                        <button class="sort-btn" onclick="event.stopPropagation();openSortSheet()">
+        </div>
+        <div class="subpage" id="subpage-history">
+            <div class="content">
+                <div class="history-header">
+                    <div class="history-title">📋 Verlauf</div>
+                    <div class="history-controls">
+                        <button class="sort-btn" onclick="openSortSheet()">
                             <span id="sortBtnIcon">📅</span>
                             <span id="sortBtnLabel" class="sort-btn-label">Datum</span>
                             <span class="sort-chevron">▼</span>
                         </button>
-                        <button class="icon-btn" onclick="event.stopPropagation();exportPDF()" title="PDF">📄</button>
-                        <button class="icon-btn" onclick="event.stopPropagation();askClearAll()">🗑️</button>
-                        <span class="section-chevron">▼</span>
+                        <button class="icon-btn" onclick="exportPDF()" title="PDF">📄</button>
+                        <button class="icon-btn" onclick="askClearAll()">🗑️</button>
                     </div>
-                </button>
-                <div class="section-body">
-                    <div id="historyList"></div>
                 </div>
+                <div id="historyList"></div>
             </div>
-
-            <div class="section-collapsible section-collapsed" id="section-stats">
-                <button class="section-toggle-btn" onclick="toggleSection('stats')">
-                    <div class="section-toggle-left">
-                        <span class="history-title">📊 Statistik</span>
-                    </div>
-                    <div class="section-toggle-right">
-                        <span class="section-chevron">▼</span>
-                    </div>
-                </button>
-                <div class="section-body">
-                    <div class="stat-toggle">
-                        <button class="stat-toggle-btn active" id="statTabCat" onclick="switchStatTab('cat')">🏷️ Kategorien</button>
-                        <button class="stat-toggle-btn" id="statTabCity" onclick="switchStatTab('city')">📍 Städte</button>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-title" id="statsPanelTitle">Nach Kategorie</div>
-                        <div id="catStats"></div>
-                    </div>
+        </div>
+        <div class="subpage" id="subpage-stats">
+            <div class="content">
+                <div class="stat-toggle">
+                    <button class="stat-toggle-btn active" id="statTabCat" onclick="switchStatTab('cat')">🏷️ Kategorien</button>
+                    <button class="stat-toggle-btn" id="statTabCity" onclick="switchStatTab('city')">📍 Städte</button>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title" id="statsPanelTitle">Nach Kategorie</div>
+                    <div id="catStats"></div>
                 </div>
             </div>
         </div>
@@ -515,8 +523,118 @@
                 <button class="plan-sort-chip" id="planSortCity" onclick="setPlanSort('city')">📍 Stadt</button>
             </div>
         </div>
-        <div class="plan-carousel" id="planList"></div>
-        <div class="places-list" id="placesList"></div>
+        <div class="plan-content">
+            <div id="planList"></div>
+            <div class="places-list" id="placesList"></div>
+            <details class="ticket-section">
+                <summary class="ticket-summary">🎟️ Tickets &amp; Reservierungen</summary>
+                <div class="ticket-body">
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">📅 Noch vor dem Abflug</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Mulbit Yeonhwa — Moonlight Lotus Show</div><div class="ticket-sub">Für 24.10. · Ticketlink · nur Fr/Sa/So, kein Verkauf vor Ort</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">KTX Seoul → Busan</div><div class="ticket-sub">Für 28.10. · über Korail oder Letskorail</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">KTX Busan → Seoul mit Tongdosa-Stopp</div><div class="ticket-sub">Für 2.11. · alternativ Inlandsflug Gimhae → Incheon</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">eSIM oder Pocket-WiFi</div><div class="ticket-sub">Für alle drei Geräte</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">LAVV — Augenbrauen-Microblading</div><div class="ticket-sub">Instagram oder Naver · braucht Vorlauf, am kurzfristigsten gefährdet</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 24.10. Sa — Seoul</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Mulbit Yeonhwa — Moonlight Lotus Show</div><div class="ticket-sub">19:00, 19:30 oder 20:00 · Ticketlink · Changgyeonggung</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 26.10. Mo — Seoul</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Jongmyo-Zeittour</div><div class="ticket-sub">An Wochentagen Pflicht · online vorab buchen</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Changdeokgung mit Huwon / Geheimem Garten</div><div class="ticket-sub">Eigenes Zeitfenster · online vorab</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Park Jun Beauty Lab Myeongdong</div><div class="ticket-sub">Friseur + Head Spa · englischsprachig, online buchbar · 26. oder 27.10.</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Val:U oder Pria Clinic</div><div class="ticket-sub">Hautklinik Myeongdong · 26. oder 27.10. abends</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 27.10. Di — Seoul</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Leeum Museum of Art</div><div class="ticket-sub">Zeitfenster vorab buchen · Hannam-dong</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 30.10. Fr — Busan Beauty-Tag</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Gesichtsbehandlung</div><div class="ticket-sub">Tattoo-freundlich bestätigen lassen!</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Lash Lift</div><div class="ticket-sub">Tattoo-freundlich bestätigen lassen!</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Fußpflege</div><div class="ticket-sub">Tattoo-freundlich bestätigen lassen!</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-reservation">📝 Reservierung</span>
+                            <div class="ticket-info"><div class="ticket-name">Personal Color Analysis</div><div class="ticket-sub">Optional · falls Slot frei</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 1.11. So — Busan</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Haeundae Sky Capsule</div><div class="ticket-sub">Zeitfenster vorab buchen · Blueline Park Mipo → Cheongsapo</div></div>
+                        </div>
+                    </div>
+
+                    <div class="ticket-group">
+                        <div class="ticket-group-title">🗓️ 3.11. Di — Incheon</div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Incheon Seaside Rail Bike</div><div class="ticket-sub">Voucher vorab · Öffnungszeiten Anfang November gegenchecken</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">CIMER Paradise City</div><div class="ticket-sub">5 % Rabatt über die Naver-App · 10–21 Uhr</div></div>
+                        </div>
+                        <div class="ticket-item">
+                            <span class="ticket-type-pill ticket-type-ticket">🎟️ Ticket</span>
+                            <div class="ticket-info"><div class="ticket-name">Paradise City Wonderbox</div><div class="ticket-sub">Indoor-Freizeitpark · wetterunabhängig</div></div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </div>
     </div>
 </div>
 
@@ -1147,10 +1265,15 @@
       document.getElementById('page-'+name).classList.add('active');
       document.querySelectorAll('.tab')[idx]?.classList.add('active');
       if(name==='plan'){renderPlan();renderPlaces();}
+      if(name==='ausgaben')showSubTab('add');
     }
-    function toggleSection(id){
-      const el=document.getElementById('section-'+id);
-      if(el)el.classList.toggle('section-collapsed');
+    function showSubTab(name){
+      const idxMap={add:0,history:1,stats:2};
+      document.querySelectorAll('.subpage').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.subtab').forEach(b=>b.classList.remove('active'));
+      const sp=document.getElementById('subpage-'+name);
+      if(sp)sp.classList.add('active');
+      document.querySelectorAll('.subtab')[idxMap[name]]?.classList.add('active');
     }
     function openBudgetModal(){document.getElementById('budgetInput').value=budget||'';document.getElementById('budgetModal').classList.remove('hidden');}
     function closeBudgetModal(){document.getElementById('budgetModal').classList.add('hidden');}
